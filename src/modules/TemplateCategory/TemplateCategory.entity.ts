@@ -2,7 +2,7 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateCol
 
 @Entity()
 class Category {
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryGeneratedColumn()
     categoryId: string;
 
     @Column({
@@ -15,7 +15,6 @@ class Category {
     @Column({
         type: 'varchar',
         length: 64,
-        unique: true,
     })
     displayName: string;
 
