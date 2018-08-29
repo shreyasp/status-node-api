@@ -12,18 +12,20 @@ class CategoryService {
 
     // Query Builder for building complex relational queries for the given
     // repository
-    queryBuilder = this.CategoryRepository.createQueryBuilder("category");
+    queryBuilder = this.CategoryRepository.createQueryBuilder('category');
 
     // Retrieve all the categories
-    findAll(): Category[] {
-        return this.CategoryRepository.find();
+    findAllCategories() {
+        return this.CategoryRepository.find()
+            .then((categories) => categories)
+            .catch((err) => err);
     }
 
     // Retrieve Category based on ID
-    findOne(id: number): Category {
+    findOneCategory (id: number) {
         return this.queryBuilder.where(
-            "category.categoryId = :categoryId",
-            {categoryId: id}
+            'category.categoryId = :categoryId',
+            {categoryId: id},
         )
         .getOne()
         .then((category) => category)
@@ -31,13 +33,17 @@ class CategoryService {
     }
 
     // Create a new Category
-    create(categoryCreateObj) {
-        return this.CategoryRepository.save(categoryCreateObj)
+    createCategory(createObj) {
+        return this.CategoryRepository.save(createObj)
             .then((obj) => obj)
             .catch((err) => err);
     }
 
     // Update Category
+    async updateCategory(id, updateObj) {
+        return this.CategoryRepository.update(
+            {categoryId: id}, {...updateObj});
+    }
 
     // Delete/Make Category In-active
 }

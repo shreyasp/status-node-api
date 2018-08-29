@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
 import { CategoryService } from './TemplateCategory.service';
 import { TemplateCategoryDTO } from './dto/TemplateCategory.dto';
 
@@ -8,19 +8,24 @@ class CategoryController {
 
     @Get()
     getAllCategories(): object {
-        return this.categoryService.findAll();
+        return this.categoryService.findAllCategories();
     }
 
     @Get(':id')
     getCategory(@Param('id') id): object {
-        return this.categoryService.findOne(id);
+        return this.categoryService.findOneCategory(id);
     }
 
     @Post()
     async createCategory(@Body() categoryDTO: TemplateCategoryDTO) {
-        return this.categoryService.create(categoryDTO)
+        return this.categoryService.createCategory(categoryDTO)
             .then((category) => category)
             .catch((err) => err);
+    }
+
+    @Put(':id')
+    updateCategory(@Param('id') id, @Body() categoryDTO: TemplateCategoryDTO) {
+        return this.categoryService.updateCategory(id, categoryDTO);
     }
 }
 
