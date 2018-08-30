@@ -1,8 +1,9 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Category } from './TemplateCategory.entity';
 import _ from 'lodash';
+import { Repository } from 'typeorm';
+
+import { Category } from './TemplateCategory.entity';
 
 @Injectable()
 class CategoryService {
@@ -41,14 +42,14 @@ class CategoryService {
     }
 
     // Update Category
-    async updateCategory(id, updateObj) {
+    updateCategory(id, updateObj) {
         return this.CategoryRepository.update(
             {categoryId: id}, {...updateObj},
         );
     }
 
     // Delete/Make Category In-active
-    async deactivateCategory(id){
+    deactivateCategory(id){
         return this.CategoryRepository.update(
             {categoryId: id}, {common: {isActive: false}},
         );
