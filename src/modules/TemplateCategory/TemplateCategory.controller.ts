@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
 import { CategoryService } from './TemplateCategory.service';
 import { TemplateCategoryDTO } from './dto/TemplateCategory.dto';
 
@@ -26,6 +26,11 @@ class CategoryController {
     @Put(':id')
     updateCategory(@Param('id') id, @Body() categoryDTO: TemplateCategoryDTO) {
         return this.categoryService.updateCategory(id, categoryDTO);
+    }
+
+    @Delete(':id')
+    deactivateCategory(@Param('id') id): object {
+        return this.categoryService.deactivateCategory(id);
     }
 }
 

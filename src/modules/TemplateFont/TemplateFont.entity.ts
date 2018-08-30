@@ -2,25 +2,32 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateCol
 import { CommonEntity } from '../../entities/common.entity';
 
 @Entity()
-class Category {
+class Font {
     @PrimaryGeneratedColumn()
-    categoryId: number;
+    fontId: number;
 
     @Column({
         type: 'varchar',
         length: 64,
         unique: true,
     })
-    name: string;
+    fontName: string;
 
     @Column({
         type: 'varchar',
-        length: 64,
+        length: 4,
+        nullable: true,
     })
-    displayName: string;
+    fontExtension: string;
 
-    @Column(type => CommonEntity)
-    common: CommonEntity;
+    @Column({
+        type: 'varchar',
+        length: 255,
+    })
+    fontPath: string;
+
+   @Column(type => CommonEntity)
+   common: CommonEntity;
 }
 
-export { Category };
+export { Font };

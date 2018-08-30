@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './TemplateCategory.entity';
+import _ from 'lodash';
 
 @Injectable()
 class CategoryService {
@@ -14,15 +15,15 @@ class CategoryService {
     // repository
     queryBuilder = this.CategoryRepository.createQueryBuilder('category');
 
-    // Retrieve all the categories
+    // Retrieve all the active categories
     findAllCategories() {
-        return this.CategoryRepository.find()
+        return this.CategoryRepository.find({ common: { isActive: true } })
             .then((categories) => categories)
             .catch((err) => err);
     }
 
     // Retrieve Category based on ID
-    findOneCategory (id: number) {
+    findOneCategory(id: number) {
         return this.queryBuilder.where(
             'category.categoryId = :categoryId',
             {categoryId: id},
@@ -42,10 +43,16 @@ class CategoryService {
     // Update Category
     async updateCategory(id, updateObj) {
         return this.CategoryRepository.update(
-            {categoryId: id}, {...updateObj});
+            {categoryId: id}, {...updateObj},
+        );
     }
 
     // Delete/Make Category In-active
+    async deactivateCategory(id){
+        return this.CategoryRepository.update(
+            {categoryId: id}, {common: {isActive: false}},
+        );
+    }
 }
 
 export { CategoryService };
