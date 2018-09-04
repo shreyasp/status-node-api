@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UploadedFile } from '@nestjs/common';
-import { FileInterceptor, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Param, Post, Put, UploadedFiles } from '@nestjs/common';
+import { FilesInterceptor, UseInterceptors } from '@nestjs/common';
 
 import { TemplateFontDTO } from './dto/TemplateFont.dto';
 import { FontService } from './TemplateFont.service';
@@ -19,9 +19,20 @@ class FontController {
     }
 
     @Post()
-    @UseInterceptors(FileInterceptor('font'))
-    createFont(@UploadedFile() fontFile) {
-        return this.fontService.createFont(fontFile);
+    @UseInterceptors(FilesInterceptor('font'))
+    createFont(@UploadedFiles() fontFiles) {
+        const createObj: any = {};
+        this.fontService.createFont(fontFiles, createObj);
+
+        if (!createObj.success) {
+            console.log(createObj);
+            return (createObj.err);
+        } else {
+            return({
+                success: true,
+                message: 'Fonts created and uploaded successfully',
+            });
+        }
     }
 
     @Put(':id')

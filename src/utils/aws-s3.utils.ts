@@ -94,7 +94,7 @@ async function assumeS3Role(
  * @param s3Key: Key name to which we need to upload the file
  * @param file: This can path file path or Buffer to be uploaded to given S3 Key
  */
-async function putS3Object(s3: AWS.S3, bucketName: string, s3Key: string, file: Buffer | string): Promise<any> {
+async function putS3Object(s3: AWS.S3, region: string, bucketName: string, s3Key: string, file: Buffer | string): Promise<any> {
 
     // If we pass file as path, then read from the path to convert into buffer or else
     // directly upload the buffer object
@@ -118,9 +118,10 @@ async function putS3Object(s3: AWS.S3, bucketName: string, s3Key: string, file: 
                     success: false,
                 });
             } else {
+                const s3Path = `https://s3.${region}.amazonaws.com/${bucketName}/${s3Key}`
                 resolve({
                     success: true,
-                    data,
+                    s3Path,
                 });
             }
         });
