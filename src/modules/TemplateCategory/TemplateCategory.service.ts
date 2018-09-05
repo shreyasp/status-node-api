@@ -18,7 +18,7 @@ class CategoryService {
 
     // Retrieve all the active categories
     findAllCategories() {
-        return this.CategoryRepository.find({ common: { isActive: true } })
+        return this.CategoryRepository.find({ isActive: true })
             .then((categories) => categories)
             .catch((err) => err);
     }
@@ -51,7 +51,7 @@ class CategoryService {
     // Delete/Make Category In-active
     deactivateCategory(id){
         return this.CategoryRepository.update(
-            {categoryId: id}, {common: {isActive: false}},
+            {categoryId: id}, { isActive: false },
         );
     }
 }

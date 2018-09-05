@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
 import { CommonEntity } from '../../entities/common.entity';
 
 @Entity()
@@ -26,8 +27,14 @@ class Font {
     })
     fontPath: string;
 
+    @Column({
+        type: 'boolean',
+        default: true,
+    })
+    isActive: boolean;
+
    @Column(type => CommonEntity)
-   common: CommonEntity;
+   attrs: CommonEntity;
 }
 
 export { Font };

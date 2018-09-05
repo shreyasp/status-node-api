@@ -1,17 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';import { split } from 'lodash';
-import { Repository } from 'typeorm';
-import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AsyncResultCallback, auto as asyncAuto, each as asyncEach, ErrorCallback } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
-import {
-    each as asyncEach,
-    auto as asyncAuto,
-    AsyncResultCallback,
-    ErrorCallback,
-} from 'async';
+import { split } from 'lodash';
+import { Repository } from 'typeorm';
 
+import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
 import { Font } from './TemplateFont.entity';
-import { create } from 'domain';
 
 @Injectable()
 class FontService {
@@ -29,7 +24,7 @@ class FontService {
 
     // Retrieve all the active Font
     findAllFonts() {
-        return this.FontRepository.find({ common: {isActive: true } })
+        return this.FontRepository.find({ isActive: true })
             .then((fonts) => fonts)
             .catch((err) => err);
     }
@@ -65,7 +60,7 @@ class FontService {
                             fontPath: results.uploadFontFile.s3Path,
                             fontName: fontObj[0],
                             fontExtension: fontObj[1],
-                            common: { isActive: true },
+                            isActive: true,
                         },
                     ).catch((err) => autoCallback(err));
                 }],
@@ -87,7 +82,7 @@ class FontService {
     // would just want to activate or deactivate a font.
     toggleFontActive(id: number) {
         return this.FontRepository.update(
-            {fontId: id}, {common: {isActive: false}},
+            {fontId: id}, {isActive: false},
         );
     }
 

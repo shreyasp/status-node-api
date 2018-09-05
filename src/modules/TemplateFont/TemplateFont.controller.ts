@@ -25,7 +25,6 @@ class FontController {
         this.fontService.createFont(fontFiles, createObj);
 
         if (!createObj.success) {
-            console.log(createObj);
             return (createObj.err);
         } else {
             return({

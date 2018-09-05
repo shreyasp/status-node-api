@@ -5,18 +5,15 @@ class CommonEntity {
     @PrimaryGeneratedColumn()
     EntId: number;
 
-    @Column({
-        name: 'isActive',
-    })
-    isActive: boolean;
-
     @CreateDateColumn({
         name: 'createdDate',
+        select: false,
     })
     createdDate: Date;
 
     @UpdateDateColumn({
         name: 'updatedDate',
+        select: false,
     })
     updatedDate: Date;
 }

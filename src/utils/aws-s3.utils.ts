@@ -1,7 +1,7 @@
 import { Credentials, STS } from 'aws-sdk';
+import { readFileSync } from 'fs';
 import { readFileSync as jsonReadFileSync } from 'jsonfile';
 import { join, parse } from 'path';
-import { readFileSync } from 'fs';
 
 /**
  * This function can be used to generate temporary credentials for performing actions
@@ -118,7 +118,7 @@ async function putS3Object(s3: AWS.S3, region: string, bucketName: string, s3Key
                     success: false,
                 });
             } else {
-                const s3Path = `https://s3.${region}.amazonaws.com/${bucketName}/${s3Key}`
+                const s3Path = `https://s3.${region}.amazonaws.com/${bucketName}/${s3Key}`;
                 resolve({
                     success: true,
                     s3Path,

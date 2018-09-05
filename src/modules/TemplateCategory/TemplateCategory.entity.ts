@@ -1,5 +1,7 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
 import { CommonEntity } from '../../entities/common.entity';
+import { Image } from '../TemplateImage/TemplateImage.entity';
 
 @Entity()
 class Category {
@@ -19,8 +21,17 @@ class Category {
     })
     displayName: string;
 
+    @OneToMany(type => Image, image => image.imageId)
+    image: Image;
+
     @Column(type => CommonEntity)
-    common: CommonEntity;
+    attrs: CommonEntity;
+
+    @Column({
+        type: 'boolean',
+        default: true,
+    })
+    isActive: boolean;
 }
 
 export { Category };
