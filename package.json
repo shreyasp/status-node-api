@@ -23,6 +23,7 @@
     "@nestjs/typeorm": "^5.2.0",
     "async": "^2.6.1",
     "aws-sdk": "^2.307.0",
+    "canvas": "^2.0.0-alpha.14",
     "fastify-formbody": "^2.0.0",
     "jsonfile": "^4.0.0",
     "lodash": "^4.17.10",

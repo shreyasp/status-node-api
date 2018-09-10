@@ -19,70 +19,76 @@ import { join, parse } from 'path';
  * default is *, access to all the Keys in the bucket.
  */
 async function assumeS3Role(
-    awsAccountId: string,
-    roleName: string,
-    stsSessionName: string,
-    awsRegion: string,
-    awsAction: string,
-    awsResourceType: string,
-    credentialsExpireDuration = 900,
-    awsResourceName = '*'): Promise<any> {
+  awsAccountId: string,
+  roleName: string,
+  stsSessionName: string,
+  awsRegion: string,
+  awsAction: string,
+  awsResourceType: string,
+  credentialsExpireDuration = 900,
+  awsResourceName = '*',
+): Promise<any> {
+  // Read the config file for Credentials for STS User
+  const awsCredentials: Credentials = new Credentials({
+    accessKeyId: '',
+    secretAccessKey: '',
+  });
+  const cfgPath = join(__dirname, '..', '..', 'config', 'aws-config.dev.json');
+  const awsConfig = jsonReadFileSync(cfgPath);
 
-    // Read the config file for Credentials for STS User
-    const awsCredentials: Credentials = new Credentials({accessKeyId: '', secretAccessKey: ''});
-    const cfgPath = join(__dirname, '..', '..', 'config', 'aws-config.dev.json');
-    const awsConfig = jsonReadFileSync(cfgPath);
+  // Create a new instance of Simple Token Service
+  const sts = new STS({
+    endpoint: `https://sts.${awsRegion}.amazonaws.com`,
+    accessKeyId: awsConfig.accessKeyId,
+    secretAccessKey: awsConfig.secretAccessKey,
+    region: awsRegion,
+  });
 
-    // Create a new instance of Simple Token Service
-    const sts = new STS({
-        endpoint: `https://sts.${awsRegion}.amazonaws.com`,
-        accessKeyId: awsConfig.accessKeyId,
-        secretAccessKey: awsConfig.secretAccessKey,
-        region: awsRegion,
-    });
+  // Policy which will restrict the access only to test bucket
+  const rolePolicy = {
+    Version: '2012-10-17',
+    Statement: [
+      {
+        Sid: 'VisualEditor0',
+        Effect: 'Allow',
+        Action: awsAction,
+        Resource: `arn:aws:s3:::${awsResourceType}/${awsResourceName}`,
+      },
+    ],
+  };
 
-    // Policy which will restrict the access only to test bucket
-    const rolePolicy = {
-        Version: '2012-10-17',
-        Statement: [
-            {
-                Sid: 'VisualEditor0',
-                Effect: 'Allow',
-                Action: awsAction,
-                Resource: `arn:aws:s3:::${awsResourceType}/${awsResourceName}`,
-            },
-        ],
-    };
+  // Assume Role
+  return new Promise((resolve, reject) => {
+    sts.assumeRole(
+      {
+        RoleArn: `arn:aws:iam::${awsAccountId}:role/${roleName}`,
+        RoleSessionName: stsSessionName,
+        DurationSeconds: credentialsExpireDuration,
+        Policy: JSON.stringify(rolePolicy),
+      },
+      (err, data) => {
+        if (err) {
+          reject({
+            success: true,
+            msg: 'Something went wrong while trying to acquire credentials',
+            err,
+          });
+        } else if (!data) {
+          reject({
+            success: false,
+            msg: 'Not able to get Temp Security Credentials',
+          });
+        } else {
+          awsCredentials.accessKeyId = data.Credentials.AccessKeyId;
+          awsCredentials.secretAccessKey = data.Credentials.SecretAccessKey;
+          awsCredentials.sessionToken = data.Credentials.SessionToken;
+          awsCredentials.expireTime = data.Credentials.Expiration;
 
-    // Assume Role
-    return new Promise((resolve, reject) => {
-        sts.assumeRole({
-            RoleArn: `arn:aws:iam::${awsAccountId}:role/${roleName}`,
-            RoleSessionName: stsSessionName,
-            DurationSeconds: credentialsExpireDuration,
-            Policy: JSON.stringify(rolePolicy),
-        }, (err, data) => {
-            if (err) {
-                reject({
-                    success: true,
-                    msg: 'Something went wrong while trying to acquire credentials',
-                    err,
-                });
-            } else if (!data) {
-                reject({
-                    success: false,
-                    msg: 'Not able to get Temp Security Credentials',
-                });
-            } else {
-                awsCredentials.accessKeyId = data.Credentials.AccessKeyId;
-                awsCredentials.secretAccessKey = data.Credentials.SecretAccessKey;
-                awsCredentials.sessionToken = data.Credentials.SessionToken;
-                awsCredentials.expireTime = data.Credentials.Expiration;
-
-                resolve(awsCredentials);
-            }
-        });
-    });
+          resolve(awsCredentials);
+        }
+      },
+    );
+  });
 }
 
 /**
@@ -94,38 +100,44 @@ async function assumeS3Role(
  * @param s3Key: Key name to which we need to upload the file
  * @param file: This can path file path or Buffer to be uploaded to given S3 Key
  */
-async function putS3Object(s3: AWS.S3, region: string, bucketName: string, s3Key: string, file: Buffer | string): Promise<any> {
+async function putS3Object(
+  s3: AWS.S3,
+  region: string,
+  bucketName: string,
+  s3Key: string,
+  file: Buffer | string,
+): Promise<any> {
+  // If we pass file as path, then read from the path to convert into buffer or else
+  // directly upload the buffer object
+  const params = {
+    Bucket: bucketName,
+    Key: s3Key,
+    Body: typeof file === 'string' ? readFileSync(file) : file,
+  };
 
-    // If we pass file as path, then read from the path to convert into buffer or else
-    // directly upload the buffer object
-    const params = {
-        Bucket: bucketName,
-        Key: s3Key,
-        Body: (typeof file === 'string') ? readFileSync(file) : file,
-    };
-
-    return new Promise((resolve, reject) => {
-        s3.putObject(params, (err, data) => {
-            if (err) {
-                reject({
-                    success: false,
-                    msg: 'Something went wrong while trying to upload',
-                    err,
-                });
-            } else if (!data) {
-                reject({
-                    msg: 'No data was returned by S3 service',
-                    success: false,
-                });
-            } else {
-                const s3Path = `https://s3.${region}.amazonaws.com/${bucketName}/${s3Key}`;
-                resolve({
-                    success: true,
-                    s3Path,
-                });
-            }
+  return new Promise((resolve, reject) => {
+    console.log(params);
+    s3.putObject(params, (err, data) => {
+      if (err) {
+        reject({
+          success: false,
+          msg: 'Something went wrong while trying to upload',
+          err,
         });
+      } else if (!data) {
+        reject({
+          msg: 'No data was returned by S3 service',
+          success: false,
+        });
+      } else {
+        const s3Path = `https://s3.${region}.amazonaws.com/${bucketName}/${s3Key}`;
+        resolve({
+          success: true,
+          s3Path,
+        });
+      }
     });
+  });
 }
 
 export { assumeS3Role };

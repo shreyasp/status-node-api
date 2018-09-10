@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PingController } from './modules/Ping/ping.controller';
 import { TemplateCategoryModule } from './modules/TemplateCategory/TemplateCategory.module';
+import { EditImageModule } from './modules/TemplateEdit/TemplateEdit.module';
 import { TemplateFontModule } from './modules/TemplateFont/TemplateFont.module';
 import { TemplateImageModule } from './modules/TemplateImage/TemplateImage.module';
 
@@ -15,11 +16,11 @@ import { TemplateImageModule } from './modules/TemplateImage/TemplateImage.modul
     TemplateCategoryModule,
     TemplateFontModule,
     TemplateImageModule,
+    EditImageModule,
   ],
   controllers: [AppController, PingController],
   providers: [AppService],
 })
-
 export class AppModule {
-  constructor(private readonly connection: Connection){}
+  constructor(private readonly connection: Connection) {}
 }
