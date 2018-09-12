@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import { createWriteStream } from 'fs';
 import { forEach, get, map, pickBy, split, uniq } from 'lodash';
 import { join } from 'path';
-import { Repository } from 'typeorm';
 
 interface IFont {
   fontName: string;
