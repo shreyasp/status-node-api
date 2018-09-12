@@ -55,17 +55,33 @@ interface TemplateLayerNameObj {
 class EditImageService {
   constructor() {}
 
+  getFontFamilyWeight(font: IFont | string): string[] {
+    if (typeof font === 'string') {
+      return split(font, '-');
+    } else {
+      return split(font.fontName, '-');
+    }
+  }
+
   registerFont(uniqFonts: string[]) {
     const basePath: string = join(__dirname, 'fonts');
 
-    forEach(uniqFonts, (font: string) => {
-      const _font_fam_wt: string[] = split(font, '-');
+    forEach(uniqFonts, (fontName: string) => {
+      const _font_fam_wt: string[] = this.getFontFamilyWeight(fontName);
       registerFont(
-        join(basePath, `${font}.ttf`),
+        join(basePath, `${fontName}.ttf`),
         { family: _font_fam_wt[0] },
         { weight: _font_fam_wt[1] },
       );
     });
+  }
+
+  placeTextLayer(layer: ILayer, context: any) {
+    // Update Font in the context
+    const font: IFont = layer.font;
+    const _font_fam_wt: string[] = this.getFontFamilyWeight(font);
+    context.font = `${_font_fam_wt[1]} normal ${font.fontSize} ${_font_fam_wt[0]}`;
+    context.fillText(layer.text, layer.frame.x, layer.frame.y);
   }
 
   editImage(imageMetadata: Partial<TemplateLayerNameObj>) {
@@ -81,23 +97,25 @@ class EditImageService {
       ),
     );
 
+    // Register Fonts required by the template
     this.registerFont(uniqFonts);
 
     /* Step - 1: Get the image and createCanvas for it */
-    // const noteHeader: ILayer = get(imageMetadata, 'note_header_text');
-    // loadImage(__dirname + '/image/Image.png').then(image => {
-    //   context.drawImage(
-    //     image,
-    //     imageFrame.x,
-    //     imageFrame.y,
-    //     imageFrame.width,
-    //     imageFrame.height,
-    //   );
-    //   const oStream = createWriteStream(__dirname + '/image/edited.png');
-    //   const pngStream = canvas.createPNGStream();
-    //   pngStream.pipe(oStream);
-    //   oStream.on('finish', () => console.log('New Image Created'));
-    // });
+    loadImage(__dirname + '/image/Image.png').then(image => {
+      context.drawImage(
+        image,
+        imageFrame.x,
+        imageFrame.y,
+        imageFrame.width,
+        imageFrame.height,
+      );
+      const noteHeader: ILayer = get(imageMetadata, 'note_header_text');
+      this.placeTextLayer(noteHeader, context);
+      const oStream = createWriteStream(__dirname + '/image/edited.png');
+      const pngStream = canvas.createPNGStream();
+      pngStream.pipe(oStream);
+      oStream.on('finish', () => console.log('New Image Created'));
+    });
   }
 }
 
