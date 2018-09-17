@@ -75,3 +75,4 @@ typings/
 .vscode
 src/modules/TemplateEdit/images
 src/modules/TemplateEdit/fonts
+.DS_Store
