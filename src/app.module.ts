@@ -9,6 +9,7 @@ import { TemplateCategoryModule } from './modules/TemplateCategory/TemplateCateg
 import { EditImageModule } from './modules/TemplateEdit/TemplateEdit.module';
 import { TemplateFontModule } from './modules/TemplateFont/TemplateFont.module';
 import { TemplateImageModule } from './modules/TemplateImage/TemplateImage.module';
+import { TemplateLayerModule } from './modules/TemplateImageLayer/TemplateImageLayer.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TemplateImageModule } from './modules/TemplateImage/TemplateImage.modul
     TemplateFontModule,
     TemplateImageModule,
     EditImageModule,
+    TemplateLayerModule,
   ],
   controllers: [AppController, PingController],
   providers: [AppService],

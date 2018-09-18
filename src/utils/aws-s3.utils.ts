@@ -1,5 +1,5 @@
 import { Credentials, STS } from 'aws-sdk';
-import { readFileSync } from 'fs';
+import { createReadStream, readFileSync } from 'fs';
 import { readFileSync as jsonReadFileSync } from 'jsonfile';
 import { join, parse } from 'path';
 
@@ -112,11 +112,10 @@ async function putS3Object(
   const params = {
     Bucket: bucketName,
     Key: s3Key,
-    Body: typeof file === 'string' ? readFileSync(file) : file,
+    Body: createReadStream(file),
   };
 
   return new Promise((resolve, reject) => {
-    console.log(params);
     s3.putObject(params, (err, data) => {
       if (err) {
         reject({
