@@ -1,21 +1,28 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  TableInheritance,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity()
+@TableInheritance({ column: { type: 'varchar', name: 'date' } })
 class CommonEntity {
-    @PrimaryGeneratedColumn()
-    EntId: number;
+  @PrimaryGeneratedColumn()
+  EntId: number;
 
-    @CreateDateColumn({
-        name: 'createdDate',
-        select: false,
-    })
-    createdDate: Date;
+  @CreateDateColumn({
+    name: 'createdDate',
+    select: false,
+  })
+  createdDate: Date;
 
-    @UpdateDateColumn({
-        name: 'updatedDate',
-        select: false,
-    })
-    updatedDate: Date;
+  @UpdateDateColumn({
+    name: 'updatedDate',
+    select: false,
+  })
+  updatedDate: Date;
 }
 
 export { CommonEntity };

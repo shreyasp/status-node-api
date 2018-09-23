@@ -4,34 +4,31 @@ import { CommonEntity } from '../../entities/common.entity';
 import { Image } from '../TemplateImage/TemplateImage.entity';
 
 @Entity()
-class Category {
-    @PrimaryGeneratedColumn()
-    categoryId: number;
+class Category extends CommonEntity {
+  @PrimaryGeneratedColumn()
+  categoryId: number;
 
-    @Column({
-        type: 'varchar',
-        length: 64,
-        unique: true,
-    })
-    name: string;
+  @Column({
+    type: 'varchar',
+    length: 64,
+    unique: true,
+  })
+  name: string;
 
-    @Column({
-        type: 'varchar',
-        length: 64,
-    })
-    displayName: string;
+  @Column({
+    type: 'varchar',
+    length: 64,
+  })
+  displayName: string;
 
-    @OneToMany(type => Image, image => image.imageId)
-    image: Image;
+  @OneToMany(type => Image, image => image.imageId)
+  image: Image;
 
-    @Column(type => CommonEntity)
-    attrs: CommonEntity;
-
-    @Column({
-        type: 'boolean',
-        default: true,
-    })
-    isActive: boolean;
+  @Column({
+    type: 'boolean',
+    default: true,
+  })
+  isActive: boolean;
 }
 
 export { Category };

@@ -10,6 +10,15 @@ import { Layer } from './TemplateImageLayer.entity';
 class LayerService {
   constructor(@InjectRepository(Layer) private readonly LayerRepository: Repository<Layer>) {}
 
+  queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
+
+  getImageRelatedLayers(imageId: DeepPartial<Image>) {
+    return this.queryBuilder
+      .getMany()
+      .then(layers => layers)
+      .catch(err => err);
+  }
+
   createUpdateTemplateLayers(imageId: DeepPartial<Image>, layers: any) {
     return new Promise((resolve, reject) => {
       asyncEachOf(
@@ -21,6 +30,7 @@ class LayerService {
             image: imageId,
             isActive: true,
           }).catch(err => cb(err));
+          cb(null);
         },
         err => {
           if (err) reject(err);

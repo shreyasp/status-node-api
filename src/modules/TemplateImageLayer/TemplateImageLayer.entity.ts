@@ -8,10 +8,14 @@ class LayerStyle {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   color: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   opacity: number;
 }
 
@@ -49,16 +53,17 @@ class LayerFont {
   @Column({
     nullable: true,
   })
-  name: string;
+  fontName: string;
 
   @Column({
     nullable: true,
+    type: 'float',
   })
-  size: number;
+  fontSize: number;
 }
 
 @Entity()
-class Layer {
+class Layer extends CommonEntity {
   @PrimaryGeneratedColumn()
   layerId: number;
 
@@ -82,7 +87,9 @@ class Layer {
   @Column()
   layerParent: string;
 
-  @Column()
+  @Column({
+    nullable: true,
+  })
   text: string;
 
   @Column()
@@ -90,9 +97,6 @@ class Layer {
 
   @Column()
   isActive: boolean;
-
-  @Column(type => CommonEntity)
-  attrs: CommonEntity;
 
   @ManyToOne(type => Image, image => image.imageId)
   @JoinTable()

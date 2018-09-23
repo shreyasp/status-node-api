@@ -1,7 +1,8 @@
 import { Credentials, STS } from 'aws-sdk';
-import { createReadStream, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { readFileSync as jsonReadFileSync } from 'jsonfile';
-import { join, parse } from 'path';
+import { join } from 'path';
+import { ReadableStreamBuffer } from 'stream-buffers';
 
 /**
  * This function can be used to generate temporary credentials for performing actions
@@ -107,33 +108,23 @@ async function putS3Object(
   s3Key: string,
   file: Buffer | string,
 ): Promise<any> {
-  // If we pass file as path, then read from the path to convert into buffer or else
-  // directly upload the buffer object
-  const params = {
-    Bucket: bucketName,
-    Key: s3Key,
-    Body: createReadStream(file),
-  };
-
   return new Promise((resolve, reject) => {
+    // NOTE: If we pass file as path, then read from the path to convert into buffer or else
+    // directly upload the buffer object
+    const params = {
+      Bucket: bucketName,
+      Key: s3Key,
+      Body: typeof file === 'string' ? readFileSync(file) : file,
+    };
+
     s3.putObject(params, (err, data) => {
       if (err) {
-        reject({
-          success: false,
-          msg: 'Something went wrong while trying to upload',
-          err,
-        });
+        reject(err);
       } else if (!data) {
-        reject({
-          msg: 'No data was returned by S3 service',
-          success: false,
-        });
+        reject(null);
       } else {
         const s3Path = `https://s3.${region}.amazonaws.com/${bucketName}/${s3Key}`;
-        resolve({
-          success: true,
-          s3Path,
-        });
+        resolve(s3Path);
       }
     });
   });

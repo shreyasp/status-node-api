@@ -5,7 +5,7 @@ import { Category } from '../TemplateCategory/TemplateCategory.entity';
 import { Layer } from '../TemplateImageLayer/TemplateImageLayer.entity';
 
 @Entity()
-class Image {
+class Image extends CommonEntity {
   @PrimaryGeneratedColumn()
   imageId: number;
 
@@ -39,9 +39,6 @@ class Image {
 
   @OneToMany(type => Layer, layer => layer.layerId)
   layer: Layer;
-
-  @Column(type => CommonEntity)
-  attrs: CommonEntity;
 }
 
 export { Image };

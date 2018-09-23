@@ -1,40 +1,33 @@
-import { Controller, Get, Param, Post, Put, UploadedFiles, Body } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, UploadedFiles } from '@nestjs/common';
 import { FilesInterceptor, UseInterceptors } from '@nestjs/common';
 
-import { ImageService } from './TemplateImage.service';
 import { TemplateImageDTO } from './dto/TemplateImage.dto';
+import { ImageService } from './TemplateImage.service';
 
 @Controller('image')
 class ImageController {
-    constructor(private readonly imageService: ImageService){}
+  constructor(private readonly imageService: ImageService) {}
 
-    createImageCallback = (err: any, results: any) => {
-        if (err) return err;
+  @Get()
+  getAllImages(): object {
+    return this.imageService.findAllImages();
+  }
 
-        return results;
-    }
+  @Get(':id')
+  getImage(@Param('id') id): object {
+    return this.imageService.findOneImage(id);
+  }
 
-    @Get()
-    getAllImages(): object {
-        return this.imageService.findAllImages();
-    }
+  @Post()
+  @UseInterceptors(FilesInterceptor('images'))
+  createImage(@Body() imageName, @Body() categoryId, @UploadedFiles() images) {
+    return this.imageService.createImage(imageName, categoryId, images);
+  }
 
-    @Get(':id')
-    getImage(@Param('id') id): object {
-        return this.imageService.findOneImage(id);
-    }
-
-    @Post()
-    @UseInterceptors(FilesInterceptor('images'))
-    createImage(@Body() imageName, @UploadedFiles() images): object {
-        this.imageService.createImage(imageName, images);
-        return {};
-    }
-
-    @Put(':id')
-    toggleImageActive(@Param('id') id) {
-        return this.imageService.toggleImageActive(id);
-    }
+  @Put(':id')
+  toggleImageActive(@Param('id') id) {
+    return this.imageService.toggleImageActive(id);
+  }
 }
 
 export { ImageController };
