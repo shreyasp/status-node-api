@@ -6,38 +6,28 @@ import { FontService } from './TemplateFont.service';
 
 @Controller('font')
 class FontController {
-    constructor(private readonly fontService: FontService){}
+  constructor(private readonly fontService: FontService) {}
 
-    @Get()
-    getAllFonts(): object {
-        return this.fontService.findAllFonts();
-    }
+  @Get()
+  getAllFonts(): object {
+    return this.fontService.findAllFonts();
+  }
 
-    @Get(':id')
-    getFont(@Param('id') id): object {
-        return this.fontService.findOneFont(id);
-    }
+  @Get(':id')
+  getFont(@Param('id') id): object {
+    return this.fontService.findOneFont(id);
+  }
 
-    @Post()
-    @UseInterceptors(FilesInterceptor('font'))
-    createFont(@UploadedFiles() fontFiles) {
-        const createObj: any = {};
-        this.fontService.createFont(fontFiles, createObj);
+  @Post()
+  @UseInterceptors(FilesInterceptor('font'))
+  createFont(@UploadedFiles() fontFiles) {
+    return this.fontService.createFont(fontFiles);
+  }
 
-        if (!createObj.success) {
-            return (createObj.err);
-        } else {
-            return({
-                success: true,
-                message: 'Fonts created and uploaded successfully',
-            });
-        }
-    }
-
-    @Put(':id')
-    toggleFontActive(@Param('id') id) {
-        return this.fontService.toggleFontActive(id);
-    }
+  @Put(':id')
+  toggleFontActive(@Param('id') id) {
+    return this.fontService.toggleFontActive(id);
+  }
 }
 
 export { FontController };

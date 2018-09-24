@@ -11,10 +11,6 @@ class CategoryService {
     @InjectRepository(Category) private readonly CategoryRepository: Repository<Category>,
   ) {}
 
-  // Query Builder for building complex relational queries for the given
-  // repository
-  queryBuilder = this.CategoryRepository.createQueryBuilder('category');
-
   // Retrieve all the active categories
   findAllCategories() {
     return this.CategoryRepository.find({ isActive: true })
@@ -24,7 +20,8 @@ class CategoryService {
 
   // Retrieve Category based on ID
   findOneCategory(id: number) {
-    return this.queryBuilder
+    const queryBuilder = this.CategoryRepository.createQueryBuilder('category');
+    return queryBuilder
       .where('id = :id', { id })
       .getOne()
       .then(category => category)

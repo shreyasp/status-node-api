@@ -1,114 +1,139 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AsyncResultCallback, auto as asyncAuto, each as asyncEach, ErrorCallback } from 'async';
+import {
+  AsyncResultCallback,
+  auto as asyncAuto,
+  eachOfSeries as asyncEachOfSeries,
+  ErrorCallback,
+} from 'async';
 import { Credentials, S3 } from 'aws-sdk';
 import { split } from 'lodash';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
 import { Font } from './TemplateFont.entity';
 
 @Injectable()
 class FontService {
-    constructor(
-        @InjectRepository(Font)
-        private readonly FontRepository: Repository<Font>,
-    ){}
+  constructor(@InjectRepository(Font) private readonly FontRepository: Repository<Font>) {}
 
-    // Temporary credentials to be used for uploading font object
-    // to S3.
-    tempCredentials: Credentials;
+  // Temporary credentials to be used for uploading font object
+  // to S3.
+  tempCredentials: Credentials;
 
-    // Query Builder object to do Fetch/Update the DB Objects
-    queryBuilder = this.FontRepository.createQueryBuilder('font');
+  // Retrieve all the active Font
+  findAllFonts() {
+    return this.FontRepository.find({ isActive: true })
+      .then(fonts => fonts)
+      .catch(err => err);
+  }
 
-    // Retrieve all the active Font
-    findAllFonts() {
-        return this.FontRepository.find({ isActive: true })
-            .then((fonts) => fonts)
-            .catch((err) => err);
-    }
+  // Retrieve Specific Font
+  findOneFont(id: number) {
+    const queryBuilder = this.FontRepository.createQueryBuilder('font');
+    return queryBuilder
+      .where('font.id = :id', { id })
+      .getOne()
+      .then(font => font)
+      .catch(err => err);
+  }
 
-    // Retrieve Specific Font
-    findOneFont(id: number) {
-        return this.queryBuilder.where(
-            'font.fontId = :fontId',
-            {fontId: id},
-        )
-        .getOne()
-        .then((font) => font)
-        .catch((err) => err);
-    }
-
-    // Font creation activity would involve creating a font object in
-    // DB which has reference to its path
-    createFont(fonts: any[], createObj: any) {
-        // Get temporary credentials for uploading to S3 Bucket
-        asyncEach(fonts, (font, eachCallback: ErrorCallback<{}>) => {
-            asyncAuto({
-                uploadFontFile: async (autoCallback: AsyncResultCallback<{}, {}>) => {
-                    const data: any = await this.uploadFontToS3(font);
-                    if (!!data.success) {
-                        autoCallback(undefined, {s3Path: data.s3Path});
-                    } else {
-                        autoCallback(data);
-                    }
+  // Font creation activity would involve creating a font object in
+  // DB which has reference to its path
+  async createFont(fonts: any[]): Promise<any> {
+    return new Promise((resolve, reject) => {
+      asyncAuto(
+        {
+          uploadFonts: (autoCallback: AsyncResultCallback<{}, {}>) => {
+            const paths: string[] = [];
+            asyncEachOfSeries(
+              fonts,
+              (font: any, idx: number, eachCallback: ErrorCallback<{}>) => {
+                this.uploadFontToS3(font)
+                  .then(data => {
+                    paths.push(data);
+                    eachCallback(null);
+                  })
+                  .catch(err => {
+                    eachCallback(err);
+                  });
+              },
+              err => {
+                if (err) autoCallback(err);
+                autoCallback(null, paths);
+              },
+            );
+          },
+          createDBObject: [
+            'uploadFonts',
+            (results: any, autoCallback: AsyncResultCallback<{}, {}>) => {
+              const savedFonts: DeepPartial<Font>[] = [];
+              asyncEachOfSeries(
+                fonts,
+                (font, idx, eachCallback: ErrorCallback<{}>) => {
+                  const fontObj: string[] = split(font.originalname, '.');
+                  this.FontRepository.save({
+                    fontPath: results.uploadFonts[idx],
+                    fontName: fontObj[0],
+                    fontExtension: fontObj[1],
+                    isActive: true,
+                  })
+                    .then(createdFont => {
+                      savedFonts.push(createdFont);
+                      eachCallback(null);
+                    })
+                    .catch(err => {
+                      eachCallback(err);
+                    });
                 },
-                createDBObject: ['uploadFontFile', (results: any, autoCallback: AsyncResultCallback<{}, {}>) => {
-                    const fontObj: string[] = split(font.originalname, '.');
-                    this.FontRepository.save({
-                            fontPath: results.uploadFontFile.s3Path,
-                            fontName: fontObj[0],
-                            fontExtension: fontObj[1],
-                            isActive: true,
-                        },
-                    ).catch((err) => autoCallback(err));
-                }],
-            }, undefined, (err, results: any) => {
-                // console.log(err);
-                if (err) eachCallback(err);
-            });
-        }, (err) => {
-            if (err) {
-                createObj = {
-                    success: false,
-                    err,
-                };
-            }
-        });
-    }
+                err => {
+                  if (err) autoCallback(err);
+                  autoCallback(null, savedFonts);
+                },
+              );
+            },
+          ],
+        },
+        Infinity,
+        (err: Error, results: any) => {
+          if (err) reject(err);
+          resolve(results.createDBObject);
+        },
+      );
+    });
+  }
 
-    // Note: We won't have 'DELETE' REST call for fonts, as we
-    // would just want to activate or deactivate a font.
-    toggleFontActive(id: number) {
-        return this.FontRepository.update(
-            {fontId: id}, {isActive: false},
-        );
-    }
+  // Note: We won't have 'DELETE' REST call for fonts, as we
+  // would just want to activate or deactivate a font.
+  toggleFontActive(id: number) {
+    return this.FontRepository.update({ id }, { isActive: false });
+  }
 
-    async uploadFontToS3(font: any): Promise<any> {
-        this.tempCredentials = await assumeS3Role(
-            '369329776707',
-            'Test',
-            'S3-Upload-Session',
+  async uploadFontToS3(font: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      assumeS3Role(
+        '369329776707',
+        'Test',
+        'S3-Upload-Session',
+        'ap-south-1',
+        's3:PutObject',
+        'test-sts-role-bucket',
+      )
+        .then(credentials => {
+          const s3Uploader: S3 = new S3({ credentials });
+          putS3Object(
+            s3Uploader,
             'ap-south-1',
-            's3:PutObject',
             'test-sts-role-bucket',
-        );
-
-        // Put the font in the bucket
-        const s3Uploader: S3 = new S3({credentials: this.tempCredentials});
-        const data = await putS3Object(s3Uploader, 'ap-south-1', 'test-sts-role-bucket',
-            `fonts/${font.originalname}`, font.buffer);
-
-        return new Promise((resolve, reject) => {
-            if (!data.success) {
-                reject(data.err);
-            } else {
-                resolve(data);
-            }
-        });
-    }
+            `fonts/${font.originalname}`,
+            font.buffer,
+          )
+            .then(data => resolve(data))
+            .catch(err => reject(err));
+        })
+        .catch(err => reject(err));
+    });
+  }
 }
 
 export { FontService };

@@ -10,8 +10,6 @@ import { Layer } from './TemplateImageLayer.entity';
 class LayerService {
   constructor(@InjectRepository(Layer) private readonly LayerRepository: Repository<Layer>) {}
 
-  // queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
-
   getImageRelatedLayers(id: DeepPartial<Image>) {
     const queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
     return queryBuilder

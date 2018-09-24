@@ -22,9 +22,6 @@ class ImageService {
   // to S3.
   tempCredentials: Credentials;
 
-  // Query Builder object to do Fetch/Update the DB Objects
-  queryBuilder = this.ImageRepository.createQueryBuilder('Image');
-
   findAllImages() {
     return this.ImageRepository.find({ isActive: true })
       .then(images => images)
@@ -32,7 +29,8 @@ class ImageService {
   }
 
   findOneImage(id: number) {
-    return this.queryBuilder
+    const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
+    return queryBuilder
       .where('id = :id', { id })
       .getOne()
       .then(image => image)
