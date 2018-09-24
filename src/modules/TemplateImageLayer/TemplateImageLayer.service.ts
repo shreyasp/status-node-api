@@ -10,10 +10,13 @@ import { Layer } from './TemplateImageLayer.entity';
 class LayerService {
   constructor(@InjectRepository(Layer) private readonly LayerRepository: Repository<Layer>) {}
 
-  queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
+  // queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
 
-  getImageRelatedLayers(imageId: DeepPartial<Image>) {
-    return this.queryBuilder
+  getImageRelatedLayers(id: DeepPartial<Image>) {
+    const queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
+    return queryBuilder
+      .leftJoinAndSelect('Layer.image', 'image')
+      .where('image.id = :id', { id })
       .getMany()
       .then(layers => layers)
       .catch(err => err);
@@ -26,7 +29,7 @@ class LayerService {
         (layer: DeepPartial<Layer>, layerName: string, cb) => {
           this.LayerRepository.save({
             ...layer,
-            layerName,
+            name: layerName,
             image: imageId,
             isActive: true,
           }).catch(err => cb(err));

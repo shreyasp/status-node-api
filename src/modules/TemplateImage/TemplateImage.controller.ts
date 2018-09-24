@@ -20,8 +20,8 @@ class ImageController {
 
   @Post()
   @UseInterceptors(FilesInterceptor('images'))
-  createImage(@Body() imageName, @Body() categoryId, @UploadedFiles() images) {
-    return this.imageService.createImage(imageName, categoryId, images);
+  createImage(@Body() reqBody, @UploadedFiles() images) {
+    return this.imageService.createImage(reqBody.imageName, reqBody.categoryId, images);
   }
 
   @Put(':id')

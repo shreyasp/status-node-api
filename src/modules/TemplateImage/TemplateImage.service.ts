@@ -33,7 +33,7 @@ class ImageService {
 
   findOneImage(id: number) {
     return this.queryBuilder
-      .where('image.imageId = :imageId', { imageId: id })
+      .where('id = :id', { id })
       .getOne()
       .then(image => image)
       .catch(err => err);
@@ -64,11 +64,11 @@ class ImageService {
             'uploadImages',
             (results: any, autoCallback: AsyncResultCallback<{}, {}>) => {
               this.ImageRepository.save({
-                imageName: 'test-image',
                 templateUrl: results.uploadImages.s3Path[0],
                 templateBackgroundUrl: results.uploadImages.s3Path[1],
                 isActive: true,
                 category: categoryId,
+                name: imageName,
               })
                 .then(image => autoCallback(null, image))
                 .catch(err => autoCallback(err));
@@ -85,7 +85,7 @@ class ImageService {
   }
 
   toggleImageActive(id: number) {
-    return this.ImageRepository.update({ imageId: id }, { isActive: false });
+    return this.ImageRepository.update({ id }, { isActive: false });
   }
 
   async uploadImageToS3(image: any): Promise<any> {

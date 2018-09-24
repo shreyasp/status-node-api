@@ -5,7 +5,7 @@ import { CommonEntity } from '../../entities/common.entity';
 @Entity()
 class Font extends CommonEntity {
   @PrimaryGeneratedColumn()
-  fontId: number;
+  id: number;
 
   @Column({
     type: 'varchar',

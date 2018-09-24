@@ -65,10 +65,10 @@ class LayerFont {
 @Entity()
 class Layer extends CommonEntity {
   @PrimaryGeneratedColumn()
-  layerId: number;
+  id: number;
 
   @Column()
-  layerName: string;
+  name: string;
 
   @Column({
     nullable: true,
@@ -98,8 +98,7 @@ class Layer extends CommonEntity {
   @Column()
   isActive: boolean;
 
-  @ManyToOne(type => Image, image => image.imageId)
-  @JoinTable()
+  @ManyToOne(type => Image, image => image.layers)
   image: Image;
 }
 

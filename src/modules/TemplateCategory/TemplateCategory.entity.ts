@@ -6,7 +6,7 @@ import { Image } from '../TemplateImage/TemplateImage.entity';
 @Entity()
 class Category extends CommonEntity {
   @PrimaryGeneratedColumn()
-  categoryId: number;
+  id: number;
 
   @Column({
     type: 'varchar',
@@ -21,7 +21,7 @@ class Category extends CommonEntity {
   })
   displayName: string;
 
-  @OneToMany(type => Image, image => image.imageId)
+  @OneToMany(type => Image, image => image.id)
   image: Image;
 
   @Column({

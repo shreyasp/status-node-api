@@ -7,13 +7,13 @@ import { Layer } from '../TemplateImageLayer/TemplateImageLayer.entity';
 @Entity()
 class Image extends CommonEntity {
   @PrimaryGeneratedColumn()
-  imageId: number;
+  id: number;
 
   @Column({
     type: 'varchar',
     length: 64,
   })
-  imageName: string;
+  name: string;
 
   @Column({
     type: 'text',
@@ -33,12 +33,11 @@ class Image extends CommonEntity {
   })
   isActive: boolean;
 
-  @ManyToOne(type => Category, category => category.categoryId)
-  @JoinTable()
+  @ManyToOne(type => Category, category => category.id)
   category: Category;
 
-  @OneToMany(type => Layer, layer => layer.layerId)
-  layer: Layer;
+  @OneToMany(type => Layer, layer => layer.image)
+  layers: Layer[];
 }
 
 export { Image };
