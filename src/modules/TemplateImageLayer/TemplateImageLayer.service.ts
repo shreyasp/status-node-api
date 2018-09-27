@@ -13,7 +13,10 @@ class LayerService {
   getImageRelatedLayers(id: DeepPartial<Image>) {
     const queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
     return queryBuilder
-      .leftJoinAndSelect('Layer.image', 'image')
+      .innerJoinAndSelect('Layer.font', 'font')
+      .innerJoinAndSelect('Layer.style', 'style')
+      .innerJoinAndSelect('Layer.frame', 'frame')
+      .innerJoinAndSelect('Layer.image', 'image')
       .where('image.id = :id', { id })
       .getMany()
       .then(layers => layers)
