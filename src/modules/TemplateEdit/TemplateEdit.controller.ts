@@ -8,7 +8,7 @@ class EditImageController {
 
   @Post(':id')
   editImage(@Param('id') id, @Body() imageLayerData) {
-    return this.editImageService.editImage(imageLayerData);
+    return this.editImageService.editImage(id, imageLayerData);
   }
 }
 
