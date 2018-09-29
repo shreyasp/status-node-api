@@ -15,7 +15,7 @@ import { Image } from '../TemplateImage/TemplateImage.entity';
 @Entity()
 class LayerStyle {
   @PrimaryGeneratedColumn()
-  id: number;
+  styleId: number;
 
   @Column({
     nullable: true,
@@ -31,7 +31,7 @@ class LayerStyle {
 @Entity()
 class LayerFrame {
   @PrimaryGeneratedColumn()
-  id: number;
+  frameId: number;
 
   @Column({
     type: 'float',
@@ -57,7 +57,7 @@ class LayerFrame {
 @Entity()
 class LayerFont {
   @PrimaryGeneratedColumn()
-  id: number;
+  fontId: number;
 
   @Column({
     nullable: true,
@@ -74,7 +74,7 @@ class LayerFont {
 @Entity()
 class Layer extends CommonEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  layerId: number;
 
   @Column()
   name: string;

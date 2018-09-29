@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { eachOf as asyncEachOf } from 'async';
+import { isEmpty } from 'lodash';
 import { DeepPartial, Repository } from 'typeorm';
 
 import { Image } from '../TemplateImage/TemplateImage.entity';
@@ -16,10 +17,24 @@ class LayerService {
       .innerJoinAndSelect('Layer.font', 'font')
       .innerJoinAndSelect('Layer.style', 'style')
       .innerJoinAndSelect('Layer.frame', 'frame')
-      .innerJoinAndSelect('Layer.image', 'image')
+      .innerJoin('Layer.image', 'image')
       .where('image.id = :id', { id })
       .getMany()
-      .then(layers => layers)
+      .then(layers => {
+        if (isEmpty(layers)) {
+          return {
+            success: true,
+            message: `No layer with imageId:${id} found in the database`,
+            data: layers,
+          };
+        }
+
+        return {
+          success: true,
+          message: `Layers for image fetched successfully`,
+          data: layers,
+        };
+      })
       .catch(err => err);
   }
 
