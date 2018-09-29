@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AsyncResultCallback, auto as asyncAuto, each as asyncEach } from 'async';
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import { createWriteStream } from 'fs';
-import { get, map, uniq } from 'lodash';
+import { get, map, merge, uniq } from 'lodash';
 import { join } from 'path';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -66,28 +66,41 @@ class EditImageService {
   }
 
   async placeTextLayers(
+    id: DeepPartial<Layer>,
     layers: Partial<TemplateLayerNameObj>,
     xPlacement: number,
     context: any,
   ): Promise<any> {
     return new Promise((resolve, reject) => {
-      asyncEach(layers, layer => {
-        if (layer.type !== 'image') {
-          const font: IFont = layer.font;
+      const queryBuilder = this.ImageRepository.createQueryBuilder('Layer');
+      queryBuilder
+        .innerJoinAndSelect('Layer.font', 'font')
+        .innerJoinAndSelect('Layer.style', 'style')
+        .innerJoinAndSelect('Layer.frame', 'frame')
+        .innerJoin('Layer.image', 'image')
+        .where('image.id = :id', { id })
+        .where('type = :type', { type: 'text' })
+        .getMany()
+        .then(fetchedLayers => {
+          map(fetchedLayers, fetchedLayer => {
+            const editedLayer = get(layers, `${fetchedLayer.name}`);
+            const mergedLayer = merge(fetchedLayer, editedLayer);
+            const font: DeepPartial<IFont> = fetchedLayer.font;
 
-          context.font = `${font.fontSize}px ${font.fontName}`;
-          context.fillStyle = layer.style.color;
-          context.textBaseline = 'top';
-          context.textAlign = layer.alignment;
+            context.font = `${font.fontSize}px ${font.fontName}`;
+            context.fillStyle = fetchedLayer.style.color;
+            context.textBaseline = 'top';
+            context.textAlign = fetchedLayer.alignment;
 
-          try {
-            context.fillText(layer.text, xPlacement, layer.frame.y);
-          } catch (err) {
-            reject(err);
-          }
-        }
-      });
-      resolve(true);
+            try {
+              context.fillText(mergedLayer.text, xPlacement, mergedLayer.frame.y);
+            } catch (err) {
+              reject(err);
+            }
+          });
+          resolve(true);
+        })
+        .catch(err => reject(err));
     });
   }
 
@@ -140,19 +153,16 @@ class EditImageService {
               })
               .catch(err => getCnvsCtxtCb(err));
           },
-          registerFonts: [
-            'getCnvsCtxt',
-            (results: any, registerFontsCb: AsyncResultCallback<{}, {}>) => {
-              this.getImageUniqFonts(id)
-                .then(data => {
-                  this.registerTemplateFonts(data.fonts);
-                  registerFontsCb(null, { success: true });
-                })
-                .catch(err => {
-                  registerFontsCb(err);
-                });
-            },
-          ],
+          registerFonts: (registerFontsCb: AsyncResultCallback<{}, {}>) => {
+            this.getImageUniqFonts(id)
+              .then(data => {
+                this.registerTemplateFonts(data.fonts);
+                registerFontsCb(null, { success: true });
+              })
+              .catch(err => {
+                registerFontsCb(err);
+              });
+          },
           imageManipulation: [
             'getCnvsCtxt',
             'registerFonts',
@@ -171,7 +181,7 @@ class EditImageService {
                 );
 
                 const xPlacement = imageFrame.width / 2;
-                return this.placeTextLayers(imageMetadata, xPlacement, context)
+                return this.placeTextLayers(id, imageMetadata, xPlacement, context)
                   .then(() => {
                     const oStream = createWriteStream(__dirname + '/images/edited.png');
                     const pngStream = canvas.createPNGStream();
