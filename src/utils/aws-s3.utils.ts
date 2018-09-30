@@ -1,7 +1,9 @@
 import { Credentials, STS } from 'aws-sdk';
-import { readFileSync } from 'fs';
+import { createWriteStream, readFileSync } from 'fs';
 import { readFileSync as jsonReadFileSync } from 'jsonfile';
-import { join } from 'path';
+import { split } from 'lodash';
+import { join, parse as pathParse } from 'path';
+import { parse as urlParse } from 'url';
 
 /**
  * This function can be used to generate temporary credentials for performing actions
@@ -69,7 +71,7 @@ async function assumeS3Role(
       (err, data) => {
         if (err) {
           reject({
-            success: true,
+            success: false,
             msg: 'Something went wrong while trying to acquire credentials',
             err,
           });
@@ -129,17 +131,27 @@ async function putS3Object(
   });
 }
 
-async function getS3Object(s3: AWS.S3, bucketName: string, s3Key: string): Promise<any> {
+async function getS3Object(s3: AWS.S3, s3URL: string): Promise<any> {
   return new Promise((resolve, reject) => {
+    const parsedURL = urlParse(s3URL);
+    const bucketName = split(parsedURL.path, '/')[1];
+
     const params = {
       Bucket: bucketName,
-      Key: s3Key,
+      Key: parsedURL.path,
     };
 
-    s3.getObject(params, (err, data) => {
-      if (err) reject(err.stack);
-      resolve(true);
-    });
+    const bckgndPath = join(__dirname, '..', '..', 'images', 'bckgnd.png');
+    const oStream = createWriteStream(bckgndPath);
+    s3.getObject(params)
+      .createReadStream()
+      .pipe(oStream);
+
+    oStream
+      .on('finish', () =>
+        resolve({ success: true, message: 'Downloaded file successfully from S3', bckgndPath }),
+      )
+      .on('error', err => reject(err));
   });
 }
 

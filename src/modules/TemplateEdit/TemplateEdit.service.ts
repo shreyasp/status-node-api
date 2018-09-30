@@ -61,6 +61,7 @@ class EditImageService {
   constructor(@InjectRepository(Layer) private readonly ImageRepository: Repository<Layer>) {}
 
   registerTemplateFonts(uniqFonts: string[]) {
+    // TODO: Establish a base path where all the uploaded fonts will be stored
     const basePath: string = join(__dirname, 'fonts');
     asyncEach(uniqFonts, (fontName: string) => {
       registerFont(join(basePath, `${fontName}.ttf`), { family: `${fontName}` });
@@ -141,6 +142,18 @@ class EditImageService {
     });
   }
 
+  async getRelatedImageFromLayer(id): Promise<any> {
+    const queryBuilder = this.ImageRepository.createQueryBuilder('Layer');
+    return new Promise((resolve, reject) => {
+      queryBuilder
+        .innerJoinAndSelect('Layer.image', 'image')
+        .where('image.id = :id', { id })
+        .getOne()
+        .then(layer => resolve(layer.image))
+        .catch(err => reject(err));
+    });
+  }
+
   async editImage(
     id: DeepPartial<Layer>,
     imageMetadata: Partial<TemplateLayerNameObj>,
@@ -148,8 +161,15 @@ class EditImageService {
     return new Promise((resolve, reject) => {
       asyncAuto(
         {
-          // TODO: Complete Download Image Callback
-          // dwnldBckgndImage: (dwnldBckgndImgCB: AsyncResultCallback<{}, {}>) => {},
+          // dwnldBckgndImage: (dwnldBckgndImgCB: AsyncResultCallback<{}, {}>) => {
+          //   this.getRelatedImageFromLayer(id)
+          //     .then(image =>
+          //       this.getObjectFromS3(image.templateBackgroundUrl).then(data => {
+          //         dwnldBckgndImgCB(null, data);
+          //       }),
+          //     )
+          //     .catch(err => dwnldBckgndImgCB(err));
+          // },
           getCnvsCtxt: (getCnvsCtxtCb: AsyncResultCallback<{}, {}>) => {
             this.getImageCanvasContext(id)
               .then(data => {
@@ -168,7 +188,6 @@ class EditImageService {
               });
           },
           imageManipulation: [
-            // TODO: Complete Download Image Callback
             // 'dwnldBckgndImage',
             'getCnvsCtxt',
             'registerFonts',
@@ -263,6 +282,29 @@ class EditImageService {
         .catch(err => reject(err));
     });
   }
+
+  // async getObjectFromS3(imageUrl: string): Promise<any> {
+  //   return new Promise((resolve, reject) => {
+  //     assumeS3Role(
+  //       '369329776707',
+  //       'Test',
+  //       'S3-Download-Session',
+  //       'ap-south-1',
+  //       's3:GetObject',
+  //       'test-sts-role-bucket',
+  //     )
+  //       .then(credentials => {
+  //         const s3Uploader: S3 = new S3({ credentials });
+  //         getS3Object(s3Uploader, imageUrl)
+  //           .then(data => resolve(data))
+  //           .catch(err => reject(err));
+  //       })
+  //       .catch(err => {
+  //         console.log(err);
+  //         reject(err);
+  //       });
+  //   });
+  // }
 }
 
 export { EditImageService };
