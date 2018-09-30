@@ -2,7 +2,6 @@ import { Credentials, STS } from 'aws-sdk';
 import { readFileSync } from 'fs';
 import { readFileSync as jsonReadFileSync } from 'jsonfile';
 import { join } from 'path';
-import { ReadableStreamBuffer } from 'stream-buffers';
 
 /**
  * This function can be used to generate temporary credentials for performing actions
@@ -130,5 +129,20 @@ async function putS3Object(
   });
 }
 
+async function getS3Object(s3: AWS.S3, bucketName: string, s3Key: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const params = {
+      Bucket: bucketName,
+      Key: s3Key,
+    };
+
+    s3.getObject(params, (err, data) => {
+      if (err) reject(err.stack);
+      resolve(true);
+    });
+  });
+}
+
 export { assumeS3Role };
 export { putS3Object };
+export { getS3Object };

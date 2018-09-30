@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AsyncResultCallback, auto as asyncAuto, each as asyncEach } from 'async';
+import { S3 } from 'aws-sdk';
 import { createCanvas, loadImage, registerFont } from 'canvas';
-import { createWriteStream } from 'fs';
+import { createWriteStream, unlink } from 'fs';
 import { get, map, merge, uniq } from 'lodash';
-import { join } from 'path';
+import { join, parse } from 'path';
 import { DeepPartial, Repository } from 'typeorm';
 
+import { assumeS3Role, getS3Object, putS3Object } from '../../utils/aws-s3.utils';
 import { Layer } from '../TemplateImageLayer/TemplateImageLayer.entity';
 
 interface IFont {
@@ -146,6 +148,8 @@ class EditImageService {
     return new Promise((resolve, reject) => {
       asyncAuto(
         {
+          // TODO: Complete Download Image Callback
+          // dwnldBckgndImage: (dwnldBckgndImgCB: AsyncResultCallback<{}, {}>) => {},
           getCnvsCtxt: (getCnvsCtxtCb: AsyncResultCallback<{}, {}>) => {
             this.getImageCanvasContext(id)
               .then(data => {
@@ -164,14 +168,17 @@ class EditImageService {
               });
           },
           imageManipulation: [
+            // TODO: Complete Download Image Callback
+            // 'dwnldBckgndImage',
             'getCnvsCtxt',
             'registerFonts',
             (results: any, imgManipCb: AsyncResultCallback<{}, {}>) => {
               const context = results.getCnvsCtxt.context;
               const canvas = results.getCnvsCtxt.canvas;
               const imageFrame = results.getCnvsCtxt.imageFrame;
+              const templateBkgndPath = join(__dirname + '/images/Image.png');
 
-              loadImage(__dirname + '/images/Image.png').then(image => {
+              loadImage(templateBkgndPath).then(image => {
                 context.drawImage(
                   image,
                   imageFrame.x,
@@ -183,14 +190,40 @@ class EditImageService {
                 const xPlacement = imageFrame.width / 2;
                 return this.placeTextLayers(id, imageMetadata, xPlacement, context)
                   .then(() => {
-                    const oStream = createWriteStream(__dirname + '/images/edited.png');
+                    const imagePath = join(__dirname, 'images', 'edited.png');
+                    const oStream = createWriteStream(imagePath);
                     const pngStream = canvas.createPNGStream();
                     pngStream.pipe(oStream);
-                    oStream.on('finish', () =>
-                      imgManipCb(null, { success: true, message: 'Image created successfully' }),
-                    );
+                    oStream.on('finish', () => imgManipCb(null, { imagePath }));
                   })
                   .catch(err => imgManipCb(err));
+              });
+            },
+          ],
+          uploadManipImage: [
+            'imageManipulation',
+            (results: any, uploadManipCb: AsyncResultCallback<{}, {}>) => {
+              const editedImgPath = results.imageManipulation.imagePath;
+              this.uploadImageToS3(editedImgPath)
+                .then(data =>
+                  uploadManipCb(null, {
+                    success: true,
+                    message: 'Image created successfully',
+                    data,
+                  }),
+                )
+                .catch(err => uploadManipCb(err));
+            },
+          ],
+          cleanUpManipImage: [
+            'uploadManipImage',
+            (results: any, cleanUpManipImgCB: AsyncResultCallback<{}, {}>) => {
+              unlink(results.imageManipulation.imagePath, err => {
+                if (err) cleanUpManipImgCB(err);
+                cleanUpManipImgCB(null, {
+                  success: true,
+                  message: 'Image cleaned up successfully',
+                });
               });
             },
           ],
@@ -198,9 +231,36 @@ class EditImageService {
         Infinity,
         (err, results) => {
           if (err) reject(err);
-          resolve(results.imageManipulation);
+          resolve(results.uploadManipImage);
         },
       );
+    });
+  }
+
+  async uploadImageToS3(imagePath: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      assumeS3Role(
+        '369329776707',
+        'Test',
+        'S3-Upload-Session',
+        'ap-south-1',
+        's3:PutObject',
+        'test-sts-role-bucket',
+      )
+        .then(credentials => {
+          const parsedPath = parse(imagePath);
+          const s3Uploader: S3 = new S3({ credentials });
+          putS3Object(
+            s3Uploader,
+            'ap-south-1',
+            'test-sts-role-bucket',
+            `images/${parsedPath.base}`,
+            imagePath,
+          )
+            .then(data => resolve(data))
+            .catch(err => reject(err));
+        })
+        .catch(err => reject(err));
     });
   }
 }
