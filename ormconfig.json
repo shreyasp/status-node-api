@@ -1,10 +1,11 @@
 {
-    "type": "postgres",
-    "username": "test",
-    "password": "test",
-    "database": "test",
-    "host": "127.0.0.1",
-    "port": 5432,
-    "synchronize": true,
-    "entities": ["src/**/**.entity{.ts,.js}"]
+  "type": "postgres",
+  "username": "test",
+  "password": "test",
+  "database": "test",
+  "host": "127.0.0.1",
+  "port": 5432,
+  "synchronize": false,
+  "logging": "all",
+  "entities": ["src/**/**.entity{.ts,.js}"]
 }

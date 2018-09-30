@@ -37,6 +37,7 @@ class Image extends CommonEntity {
   category: Category;
 
   @OneToMany(type => Layer, layer => layer.image)
+  @JoinTable()
   layers: Layer[];
 }
 

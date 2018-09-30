@@ -7,7 +7,7 @@ import {
   ErrorCallback,
 } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
-import { replace as lodashReplace } from 'lodash';
+import { isEmpty, map as loMap, omit, replace as lodashReplace, set as loSet } from 'lodash';
 import { DeepPartial, Repository } from 'typeorm';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
@@ -18,23 +18,65 @@ import { Image } from './TemplateImage.entity';
 class ImageService {
   constructor(@InjectRepository(Image) private readonly ImageRepository: Repository<Image>) {}
 
-  // Temporary credentials to be used for uploading image object
-  // to S3.
+  // Temporary credentials to be used for uploading image object to S3.
   tempCredentials: Credentials;
 
   findAllImages() {
     return this.ImageRepository.find({ isActive: true })
-      .then(images => images)
-      .catch(err => err);
+      .then(images => {
+        if (isEmpty(images))
+          return {
+            success: true,
+            message: `No active could be fetched from the database`,
+            data: [],
+          };
+
+        return {
+          success: true,
+          message: `Images fetched successfully`,
+          data: loMap(images, image => omit(image, ['EntId', 'isActive'])),
+        };
+      })
+      .catch(err => ({
+        success: false,
+        message: `Something went wrong while trying to fetch all active images`,
+        err,
+      }));
   }
 
-  findOneImage(id: number) {
+  findOneImage(id: number): Promise<any> {
     const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
     return queryBuilder
+      .innerJoinAndSelect('Image.layers', 'layer')
       .where('id = :id', { id })
+      .andWhere('layer.type = :type', { type: 'text' })
       .getOne()
-      .then(image => image)
-      .catch(err => err);
+      .then(image => {
+        if (isEmpty(image)) {
+          return {
+            success: true,
+            message: `No Image with id:${id} found in the database`,
+            data: null,
+          };
+        }
+
+        const modifiedLayers = loMap(image.layers, layer =>
+          omit(layer, ['EntId', 'layerId', 'alignment', 'layerParent', 'isActive']),
+        );
+
+        loSet(image, 'layers', modifiedLayers);
+
+        return {
+          success: true,
+          message: `Image with id:${id} fetched successfully`,
+          image,
+        };
+      })
+      .catch(err => ({
+        success: false,
+        message: `Something went wrong while trying to fetch image with id: ${id}`,
+        err,
+      }));
   }
 
   createImage(imageName: string, categoryId: DeepPartial<Category>, images: any): Promise<any> {

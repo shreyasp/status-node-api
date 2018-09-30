@@ -1,4 +1,13 @@
-import { Column, Entity, JoinTable, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { CommonEntity } from '../../entities/common.entity';
 import { Image } from '../TemplateImage/TemplateImage.entity';
@@ -6,7 +15,7 @@ import { Image } from '../TemplateImage/TemplateImage.entity';
 @Entity()
 class LayerStyle {
   @PrimaryGeneratedColumn()
-  id: number;
+  styleId: number;
 
   @Column({
     nullable: true,
@@ -22,7 +31,7 @@ class LayerStyle {
 @Entity()
 class LayerFrame {
   @PrimaryGeneratedColumn()
-  id: number;
+  frameId: number;
 
   @Column({
     type: 'float',
@@ -48,7 +57,7 @@ class LayerFrame {
 @Entity()
 class LayerFont {
   @PrimaryGeneratedColumn()
-  id: number;
+  fontId: number;
 
   @Column({
     nullable: true,
@@ -65,7 +74,7 @@ class LayerFont {
 @Entity()
 class Layer extends CommonEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  layerId: number;
 
   @Column()
   name: string;
@@ -74,15 +83,6 @@ class Layer extends CommonEntity {
     nullable: true,
   })
   alignment: string;
-
-  @Column(type => LayerFrame)
-  frame: LayerFrame;
-
-  @Column(type => LayerFont)
-  font: LayerFont;
-
-  @Column(type => LayerStyle)
-  style: LayerStyle;
 
   @Column()
   layerParent: string;
@@ -97,6 +97,24 @@ class Layer extends CommonEntity {
 
   @Column()
   isActive: boolean;
+
+  @OneToOne(type => LayerStyle, {
+    cascade: true,
+  })
+  @JoinColumn()
+  style: LayerStyle;
+
+  @OneToOne(type => LayerFont, {
+    cascade: true,
+  })
+  @JoinColumn()
+  font: LayerFont;
+
+  @OneToOne(type => LayerFrame, {
+    cascade: true,
+  })
+  @JoinColumn()
+  frame: LayerFrame;
 
   @ManyToOne(type => Image, image => image.layers)
   image: Image;
