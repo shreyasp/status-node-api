@@ -77,3 +77,4 @@ src/modules/TemplateEdit/images
 src/modules/TemplateEdit/fonts
 .DS_Store
 dist/*
+ormconfig.json
