@@ -1,6 +1,6 @@
-import { CommonEntity } from 'entities/common.entity';
 import { Column, Entity, JoinTable, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
+import { CommonEntity } from '../../entities/common.entity';
 import { Category } from '../TemplateCategory/TemplateCategory.entity';
 import { Layer } from '../TemplateImageLayer/TemplateImageLayer.entity';
 
