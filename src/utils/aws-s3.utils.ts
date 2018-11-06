@@ -116,6 +116,7 @@ async function putS3Object(
       Bucket: bucketName,
       Key: s3Key,
       Body: typeof file === 'string' ? readFileSync(file) : file,
+      ACL: 'public-read',
     };
 
     s3.putObject(params, (err, data) => {
