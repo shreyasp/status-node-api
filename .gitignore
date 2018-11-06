@@ -78,3 +78,4 @@ src/modules/TemplateEdit/fonts
 .DS_Store
 dist/*
 ormconfig.json
+src/modules/AppConfig/config

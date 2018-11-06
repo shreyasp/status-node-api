@@ -8,7 +8,8 @@ import { get, map, merge, uniq } from 'lodash';
 import { join, parse } from 'path';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { assumeS3Role, getS3Object, putS3Object } from '../../utils/aws-s3.utils';
+import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
+import { AppConfigService } from '../AppConfig/AppConfig.service';
 import { Layer } from '../TemplateImageLayer/TemplateImageLayer.entity';
 
 interface IFont {
@@ -59,6 +60,8 @@ interface TemplateLayerNameObj {
 @Injectable()
 class EditImageService {
   constructor(@InjectRepository(Layer) private readonly ImageRepository: Repository<Layer>) {}
+
+  config = new AppConfigService().readAppConfig();
 
   registerTemplateFonts(uniqFonts: string[]) {
     // TODO: Establish a base path where all the uploaded fonts will be stored
@@ -259,20 +262,20 @@ class EditImageService {
   async uploadImageToS3(imagePath: string): Promise<any> {
     return new Promise((resolve, reject) => {
       assumeS3Role(
-        '369329776707',
-        'Test',
+        `${this.config.accountId}`,
+        `${this.config.assumedRole}`,
         'S3-Upload-Session',
-        'ap-south-1',
-        's3:PutObject',
-        'test-sts-role-bucket',
+        `${this.config.awsRegion}`,
+        's3:*',
+        `${this.config.bucketName}`,
       )
         .then(credentials => {
           const parsedPath = parse(imagePath);
           const s3Uploader: S3 = new S3({ credentials });
           putS3Object(
             s3Uploader,
-            'ap-south-1',
-            'test-sts-role-bucket',
+            `${this.config.awsRegion}`,
+            `${this.config.bucketName}`,
             `images/${parsedPath.base}`,
             imagePath,
           )
