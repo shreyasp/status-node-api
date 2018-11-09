@@ -2,8 +2,9 @@ import { Credentials, STS } from 'aws-sdk';
 import { createWriteStream, readFileSync } from 'fs';
 import { readFileSync as jsonReadFileSync } from 'jsonfile';
 import { split } from 'lodash';
-import { join, parse as pathParse } from 'path';
 import { parse as urlParse } from 'url';
+
+import { AppConfigService } from '../modules/AppConfig/AppConfig.service';
 
 /**
  * This function can be used to generate temporary credentials for performing actions
@@ -35,8 +36,8 @@ async function assumeS3Role(
     accessKeyId: '',
     secretAccessKey: '',
   });
-  const cfgPath = join(__dirname, '..', '..', 'config', 'aws-config.dev.json');
-  const awsConfig = jsonReadFileSync(cfgPath);
+
+  const awsConfig = getAppConfig();
 
   // Create a new instance of Simple Token Service
   const sts = new STS({
@@ -116,6 +117,7 @@ async function putS3Object(
       Bucket: bucketName,
       Key: s3Key,
       Body: typeof file === 'string' ? readFileSync(file) : file,
+      ACL: 'public-read',
     };
 
     s3.putObject(params, (err, data) => {
@@ -131,30 +133,34 @@ async function putS3Object(
   });
 }
 
-async function getS3Object(s3: AWS.S3, s3URL: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const parsedURL = urlParse(s3URL);
-    const bucketName = split(parsedURL.path, '/')[1];
+// async function getS3Object(s3: AWS.S3, s3URL: string): Promise<any> {
+//   return new Promise((resolve, reject) => {
+//     const parsedURL = urlParse(s3URL);
+//     const bucketName = split(parsedURL.path, '/')[1];
 
-    const params = {
-      Bucket: bucketName,
-      Key: parsedURL.path,
-    };
+//     const params = {
+//       Bucket: bucketName,
+//       Key: parsedURL.path,
+//     };
 
-    const bckgndPath = join(__dirname, '..', '..', 'images', 'bckgnd.png');
-    const oStream = createWriteStream(bckgndPath);
-    s3.getObject(params)
-      .createReadStream()
-      .pipe(oStream);
+//     const bckgndPath = join(__dirname, '..', '..', 'images', 'bckgnd.png');
+//     const oStream = createWriteStream(bckgndPath);
+//     s3.getObject(params)
+//       .createReadStream()
+//       .pipe(oStream);
 
-    oStream
-      .on('finish', () =>
-        resolve({ success: true, message: 'Downloaded file successfully from S3', bckgndPath }),
-      )
-      .on('error', err => reject(err));
-  });
+//     oStream
+//       .on('finish', () =>
+//         resolve({ success: true, message: 'Downloaded file successfully from S3', bckgndPath }),
+//       )
+//       .on('error', err => reject(err));
+//   });
+// }
+
+function getAppConfig() {
+  return new AppConfigService().readAppConfig();
 }
 
 export { assumeS3Role };
 export { putS3Object };
-export { getS3Object };
+// export { getS3Object };

@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post, Put, UploadedFiles } from '@nestjs/common';
-import { FilesInterceptor, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, UploadedFile } from '@nestjs/common';
+import { FileInterceptor, UseInterceptors } from '@nestjs/common';
 
 import { TemplateImageDTO } from './dto/TemplateImage.dto';
 import { ImageService } from './TemplateImage.service';
@@ -19,9 +19,26 @@ class ImageController {
   }
 
   @Post()
-  @UseInterceptors(FilesInterceptor('images'))
-  createImage(@Body() reqBody, @UploadedFiles() images) {
-    return this.imageService.createImage(reqBody.imageName, reqBody.categoryId, images);
+  createImage(@Body() reqBody) {
+    return this.imageService.createImage(reqBody.imageName, reqBody.categoryId);
+  }
+
+  @Put(':id/background/:uniqName')
+  @UseInterceptors(FileInterceptor('background'))
+  uploadTemplateBackground(
+    @Param('id') imageId,
+    @Param('uniqName') uniqName,
+    @UploadedFile() background,
+  ) {
+    return this.imageService
+      .uploadTemplateBackground(imageId, uniqName, background)
+      .catch(err => err);
+  }
+
+  @Put(':id/template/:uniqName')
+  @UseInterceptors(FileInterceptor('template'))
+  uploadTemplate(@Param('id') imageId, @Param('uniqName') uniqName, @UploadedFile() template) {
+    return this.imageService.uploadTemplate(imageId, uniqName, template).catch(err => err);
   }
 
   @Put(':id')
