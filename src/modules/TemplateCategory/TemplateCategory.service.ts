@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import _ from 'lodash';
+import { map as loMap, omit } from 'lodash';
 import { Repository } from 'typeorm';
 
 import { Category } from './TemplateCategory.entity';
@@ -14,7 +14,13 @@ class CategoryService {
   // Retrieve all the active categories
   findAllCategories() {
     return this.CategoryRepository.find({ isActive: true })
-      .then(categories => categories)
+      .then(categories => {
+        return {
+          success: true,
+          message: 'Fetched all active categories successfully',
+          data: loMap(categories, c => omit(c, ['EntId', 'isActive'])),
+        };
+      })
       .catch(err => err);
   }
 
@@ -24,7 +30,13 @@ class CategoryService {
     return queryBuilder
       .where('id = :id', { id })
       .getOne()
-      .then(category => category)
+      .then(category => {
+        return {
+          success: true,
+          message: `Fetched Category with id:${id} successfully`,
+          data: omit(category, ['EntId', 'isActive']),
+        };
+      })
       .catch(err => err);
   }
 
