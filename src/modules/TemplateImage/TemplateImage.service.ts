@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AsyncResultCallback, auto as asyncAuto } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
-import { isEmpty, map as loMap, omit, replace as lodashReplace, set as loSet } from 'lodash';
+import { isEmpty, map as loMap, merge as loMerge, omit, set as loSet } from 'lodash';
 import { DeepPartial, Repository } from 'typeorm';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
@@ -44,34 +44,52 @@ class ImageService {
   findOneImage(id: number): Promise<any> {
     const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
     return queryBuilder
-      .innerJoinAndSelect('Image.layers', 'layer')
       .where('id = :id', { id })
-      .andWhere('layer.type = :type', { type: 'text' })
+      .andWhere('Image.isActive = :isActive', { isActive: true })
       .getOne()
       .then(image => {
+        // NOTE: No Image exists within the database, so just return the back message
         if (isEmpty(image)) {
           return {
             success: true,
             message: `No Image with id:${id} found in the database`,
-            data: null,
+            data: image,
           };
         }
 
-        const modifiedLayers = loMap(image.layers, layer =>
-          omit(layer, ['EntId', 'layerId', 'alignment', 'layerParent', 'isActive']),
-        );
+        // NOTE: If Image exists, we need to check whether we have layers for the image
+        return queryBuilder
+          .innerJoinAndSelect('Image.layers', 'layer')
+          .where('id = :id', { id })
+          .andWhere('layer.type = :type', { type: 'text' })
+          .getOne()
+          .then(imageWLayers => {
+            // NOTE: We don't have layers information and so we will just respond back with the
+            // empty layer array in the response.
+            if (isEmpty(imageWLayers)) {
+              image.layers = [];
+            } else {
+              const modifiedLayers = loMap(imageWLayers.layers, layer =>
+                omit(layer, ['EntId', 'layerId', 'alignment', 'layerParent', 'isActive']),
+              );
+              loSet(imageWLayers, 'layers', modifiedLayers);
 
-        loSet(image, 'layers', modifiedLayers);
+              // NOTE: After post-processing Image with Layers merge with Image object before
+              // sending the response
+              loMerge(image, imageWLayers);
+            }
 
-        return {
-          success: true,
-          message: `Image with id:${id} fetched successfully`,
-          data: omit(image, ['EntId', 'isActive']),
-        };
+            return {
+              success: true,
+              message: `Image for id: ${id} successfully retrieved`,
+              data: omit(image, ['isActive', 'EntId']),
+            };
+          })
+          .catch(err => err);
       })
       .catch(err => ({
         success: false,
-        message: `Something went wrong while trying to fetch image with id: ${id}`,
+        message: `Something went wrong while trying to get the Image with id: ${id}`,
         err,
       }));
   }
