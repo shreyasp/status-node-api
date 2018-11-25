@@ -1,0 +1,8 @@
+{
+  "accessKeyId": "AKIAIYVXKI7OJNQ4OBTA",
+  "secretAccessKey": "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",
+  "accountId": "178687425488",
+  "bucketName": "status-app-prod",
+  "assumedRole": "STS-Prod-Role",
+  "awsRegion": "us-east-1"
+}
