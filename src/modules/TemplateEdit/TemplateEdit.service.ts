@@ -1,15 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AsyncResultCallback, auto as asyncAuto, each as asyncEach } from 'async';
+import {
+  AsyncResultCallback,
+  auto as asyncAuto,
+  each as asyncEach,
+  every as asyncEvery,
+  map as asyncMap,
+} from 'async';
 import { S3 } from 'aws-sdk';
+import axios from 'axios';
 import { createCanvas, loadImage, registerFont } from 'canvas';
-import { createWriteStream, unlink } from 'fs';
+import { createWriteStream, unlink, writeFile } from 'fs';
 import { get, map, merge, uniq } from 'lodash';
+import * as moment from 'moment';
 import { join, parse } from 'path';
 import { DeepPartial, Repository } from 'typeorm';
+import { parse as urlParse } from 'url';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
 import { AppConfigService } from '../AppConfig/AppConfig.service';
+import { Font } from '../TemplateFont/TemplateFont.entity';
+import { Image } from '../TemplateImage/TemplateImage.entity';
 import { Layer } from '../TemplateImageLayer/TemplateImageLayer.entity';
 
 interface IFont {
@@ -59,7 +70,11 @@ interface TemplateLayerNameObj {
 
 @Injectable()
 class EditImageService {
-  constructor(@InjectRepository(Layer) private readonly ImageRepository: Repository<Layer>) {}
+  constructor(
+    @InjectRepository(Layer) private readonly LayerRepository: Repository<Layer>,
+    @InjectRepository(Image) private readonly ImageRepository: Repository<Image>,
+    @InjectRepository(Font) private readonly FontRepository: Repository<Font>,
+  ) {}
 
   config = new AppConfigService().readAppConfig();
 
@@ -78,7 +93,7 @@ class EditImageService {
     context: any,
   ): Promise<any> {
     return new Promise((resolve, reject) => {
-      const queryBuilder = this.ImageRepository.createQueryBuilder('Layer');
+      const queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
       queryBuilder
         .innerJoinAndSelect('Layer.font', 'font')
         .innerJoinAndSelect('Layer.style', 'style')
@@ -111,7 +126,7 @@ class EditImageService {
   }
 
   getImageCanvasContext(id: DeepPartial<Layer>): Promise<any> {
-    const queryBuilder = this.ImageRepository.createQueryBuilder('Layer');
+    const queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
     return new Promise((resolve, reject) => {
       queryBuilder
         .innerJoinAndSelect('Layer.frame', 'frame')
@@ -130,7 +145,7 @@ class EditImageService {
   }
 
   getImageUniqFonts(id: DeepPartial<Layer>): Promise<any> {
-    const queryBuilder = this.ImageRepository.createQueryBuilder('Layer');
+    const queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
     return new Promise((resolve, reject) => {
       queryBuilder
         .innerJoinAndSelect('Layer.font', 'font')
@@ -146,7 +161,7 @@ class EditImageService {
   }
 
   async getRelatedImageFromLayer(id): Promise<any> {
-    const queryBuilder = this.ImageRepository.createQueryBuilder('Layer');
+    const queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
     return new Promise((resolve, reject) => {
       queryBuilder
         .innerJoinAndSelect('Layer.image', 'image')
@@ -162,17 +177,76 @@ class EditImageService {
     imageMetadata: Partial<TemplateLayerNameObj>,
   ): Promise<any> {
     return new Promise((resolve, reject) => {
+      const filesToCleanUp: string[] = [];
       asyncAuto(
         {
-          // dwnldBckgndImage: (dwnldBckgndImgCB: AsyncResultCallback<{}, {}>) => {
-          //   this.getRelatedImageFromLayer(id)
-          //     .then(image =>
-          //       this.getObjectFromS3(image.templateBackgroundUrl).then(data => {
-          //         dwnldBckgndImgCB(null, data);
-          //       }),
-          //     )
-          //     .catch(err => dwnldBckgndImgCB(err));
-          // },
+          downloadImage: (downloadImageCB: AsyncResultCallback<{}, {}>) => {
+            const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
+            queryBuilder
+              .select('image.templateBackgroundUrl')
+              .from(Image, 'image')
+              .where('image.id = :id', { id })
+              .getOne()
+              .then(image => image.templateBackgroundUrl)
+              .then(templateUrl => {
+                const dateString = moment().unix();
+                const imagePath = join(__dirname, 'images', `${dateString}-background.png`);
+                const axiosConfig = { responseType: 'arraybuffer' };
+
+                axios
+                  .get(templateUrl, axiosConfig)
+                  .then(response => new Buffer(response.data, 'binary'))
+                  .then(data => {
+                    writeFile(imagePath, data, err => {
+                      if (err) downloadImageCB(err);
+                      filesToCleanUp.push(imagePath);
+                      downloadImageCB(null, { imagePath });
+                    });
+                  })
+                  .catch(err => downloadImageCB(err));
+              })
+              .catch(err => downloadImageCB(err));
+          },
+          downloadFonts: (downloadFontsCB: AsyncResultCallback<{}, {}>) => {
+            const queryBuilder = this.FontRepository.createQueryBuilder('Font');
+            const axiosConfig = { responseType: 'arraybuffer' };
+
+            this.getImageUniqFonts(id)
+              .then(data => data.fonts)
+              .then(fontNames => {
+                queryBuilder
+                  .select('font.fontPath')
+                  .from(Font, 'font')
+                  .where('font.fontName IN (:...fontNames)', { fontNames })
+                  .getMany()
+                  .then(fontUrls => {
+                    asyncMap(
+                      fontUrls,
+                      (fontUrl, cb) => {
+                        const fontFile = parse(urlParse(fontUrl.fontPath).path).base;
+                        const fontPath = join(__dirname, 'fonts', fontFile);
+
+                        axios
+                          .get(fontUrl.fontPath, axiosConfig)
+                          .then(response => new Buffer(response.data, 'binary'))
+                          .then(data => {
+                            writeFile(fontPath, data, err => {
+                              if (err) downloadFontsCB(err);
+                              filesToCleanUp.push(fontPath);
+                              cb(null, fontPath);
+                            });
+                          })
+                          .catch(err => downloadFontsCB(err));
+                      },
+                      (err, results) => {
+                        if (err) downloadFontsCB(err);
+                        downloadFontsCB(null, results);
+                      },
+                    );
+                  })
+                  .catch(err => downloadFontsCB(err));
+              });
+          },
           getCnvsCtxt: (getCnvsCtxtCb: AsyncResultCallback<{}, {}>) => {
             this.getImageCanvasContext(id)
               .then(data => {
@@ -180,27 +254,29 @@ class EditImageService {
               })
               .catch(err => getCnvsCtxtCb(err));
           },
-          registerFonts: (registerFontsCb: AsyncResultCallback<{}, {}>) => {
-            this.getImageUniqFonts(id)
-              .then(data => {
-                this.registerTemplateFonts(data.fonts);
-                registerFontsCb(null, { success: true });
-              })
-              .catch(err => {
-                registerFontsCb(err);
-              });
-          },
+          registerFonts: [
+            'downloadFonts',
+            (results: any, registerFontsCb: AsyncResultCallback<{}, {}>) => {
+              this.getImageUniqFonts(id)
+                .then(data => {
+                  this.registerTemplateFonts(data.fonts);
+                  registerFontsCb(null, { success: true });
+                })
+                .catch(err => {
+                  registerFontsCb(err);
+                });
+            },
+          ],
           imageManipulation: [
-            // 'dwnldBckgndImage',
+            'downloadImage',
             'getCnvsCtxt',
             'registerFonts',
             (results: any, imgManipCb: AsyncResultCallback<{}, {}>) => {
               const context = results.getCnvsCtxt.context;
               const canvas = results.getCnvsCtxt.canvas;
               const imageFrame = results.getCnvsCtxt.imageFrame;
-              const templateBkgndPath = join(__dirname + '/images/Image.png');
 
-              loadImage(templateBkgndPath).then(image => {
+              loadImage(results.downloadImage.imagePath).then(image => {
                 context.drawImage(
                   image,
                   imageFrame.x,
@@ -212,11 +288,15 @@ class EditImageService {
                 const xPlacement = imageFrame.width / 2;
                 return this.placeTextLayers(id, imageMetadata, xPlacement, context)
                   .then(() => {
-                    const imagePath = join(__dirname, 'images', 'edited.png');
+                    const dateString = moment().unix();
+                    const imagePath = join(__dirname, 'images', `${dateString}-edited.png`);
                     const oStream = createWriteStream(imagePath);
                     const pngStream = canvas.createPNGStream();
                     pngStream.pipe(oStream);
-                    oStream.on('finish', () => imgManipCb(null, { imagePath }));
+                    oStream.on('finish', () => {
+                      filesToCleanUp.push(imagePath);
+                      imgManipCb(null, { imagePath });
+                    });
                   })
                   .catch(err => imgManipCb(err));
               });
@@ -240,13 +320,16 @@ class EditImageService {
           cleanUpManipImage: [
             'uploadManipImage',
             (results: any, cleanUpManipImgCB: AsyncResultCallback<{}, {}>) => {
-              unlink(results.imageManipulation.imagePath, err => {
-                if (err) cleanUpManipImgCB(err);
-                cleanUpManipImgCB(null, {
-                  success: true,
-                  message: 'Image cleaned up successfully',
-                });
-              });
+              asyncEvery(
+                filesToCleanUp,
+                (filePath, cb) => {
+                  unlink(filePath, err => cb(null, true));
+                },
+                (err, result) => {
+                  if (err) cleanUpManipImgCB(err);
+                  cleanUpManipImgCB(null, { success: result });
+                },
+              );
             },
           ],
         },
@@ -285,29 +368,6 @@ class EditImageService {
         .catch(err => reject(err));
     });
   }
-
-  // async getObjectFromS3(imageUrl: string): Promise<any> {
-  //   return new Promise((resolve, reject) => {
-  //     assumeS3Role(
-  //       '369329776707',
-  //       'Test',
-  //       'S3-Download-Session',
-  //       'ap-south-1',
-  //       's3:GetObject',
-  //       'test-sts-role-bucket',
-  //     )
-  //       .then(credentials => {
-  //         const s3Uploader: S3 = new S3({ credentials });
-  //         getS3Object(s3Uploader, imageUrl)
-  //           .then(data => resolve(data))
-  //           .catch(err => reject(err));
-  //       })
-  //       .catch(err => {
-  //         console.log(err);
-  //         reject(err);
-  //       });
-  //   });
-  // }
 }
 
 export { EditImageService };

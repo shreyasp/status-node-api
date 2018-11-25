@@ -1,8 +1,5 @@
 import { Credentials, STS } from 'aws-sdk';
-import { createWriteStream, readFileSync } from 'fs';
-import { readFileSync as jsonReadFileSync } from 'jsonfile';
-import { split } from 'lodash';
-import { parse as urlParse } from 'url';
+import { readFileSync } from 'fs';
 
 import { AppConfigService } from '../modules/AppConfig/AppConfig.service';
 
@@ -109,10 +106,12 @@ async function putS3Object(
   bucketName: string,
   s3Key: string,
   file: Buffer | string,
+  useCloudFront = false,
 ): Promise<any> {
   return new Promise((resolve, reject) => {
     // NOTE: If we pass file as path, then read from the path to convert into buffer or else
     // directly upload the buffer object
+    const awsConfig = getAppConfig();
     const params = {
       Bucket: bucketName,
       Key: s3Key,
@@ -126,7 +125,9 @@ async function putS3Object(
       } else if (!data) {
         reject(null);
       } else {
-        const s3Path = `https://s3.${region}.amazonaws.com/${bucketName}/${s3Key}`;
+        const s3Path = useCloudFront
+          ? `${awsConfig.cloudFrontBaseUrl}/${s3Key}`
+          : `${awsConfig.s3BaseUrl}/${s3Key}`;
         resolve(s3Path);
       }
     });
