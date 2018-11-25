@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AsyncResultCallback, auto as asyncAuto, each as asyncEach, map as asyncMap } from 'async';
+import {
+  AsyncResultCallback,
+  auto as asyncAuto,
+  each as asyncEach,
+  every as asyncEvery,
+  map as asyncMap,
+} from 'async';
 import { S3 } from 'aws-sdk';
 import axios from 'axios';
 import { createCanvas, loadImage, registerFont } from 'canvas';
-import { createWriteStream, unlinkSync, writeFile } from 'fs';
+import { createWriteStream, unlink, writeFile } from 'fs';
 import { get, map, merge, uniq } from 'lodash';
 import * as moment from 'moment';
 import { join, parse } from 'path';
@@ -311,34 +317,25 @@ class EditImageService {
                 .catch(err => uploadManipCb(err));
             },
           ],
-          // cleanUpManipImage: [
-          //   'uploadManipImage',
-          //   (results: any, cleanUpManipImgCB: AsyncResultCallback<{}, {}>) => {
-          //     asyncEach(
-          //       filesToCleanUp,
-          //       filePath => {
-          //         try {
-          //           unlinkSync(filePath);
-          //         } catch (err) {
-          //           throw new Error(err);
-          //         }
-
-          //         cleanUpManipImgCB(null, {
-          //           success: true,
-          //           message: 'Images cleaned up successfully',
-          //         });
-          //       },
-          //       err => {
-          //         if (err) cleanUpManipImgCB(err);
-          //       },
-          //     );
-          //   },
-          // ],
+          cleanUpManipImage: [
+            'uploadManipImage',
+            (results: any, cleanUpManipImgCB: AsyncResultCallback<{}, {}>) => {
+              asyncEvery(
+                filesToCleanUp,
+                (filePath, cb) => {
+                  unlink(filePath, err => cb(null, true));
+                },
+                (err, result) => {
+                  if (err) cleanUpManipImgCB(err);
+                  cleanUpManipImgCB(null, { success: result });
+                },
+              );
+            },
+          ],
         },
         Infinity,
         (err, results) => {
           if (err) reject(err);
-          console.log(filesToCleanUp);
           resolve(results.uploadManipImage);
         },
       );
@@ -371,29 +368,6 @@ class EditImageService {
         .catch(err => reject(err));
     });
   }
-
-  // async getObjectFromS3(imageUrl: string): Promise<any> {
-  //   return new Promise((resolve, reject) => {
-  //     assumeS3Role(
-  //       '369329776707',
-  //       'Test',
-  //       'S3-Download-Session',
-  //       'ap-south-1',
-  //       's3:GetObject',
-  //       'test-sts-role-bucket',
-  //     )
-  //       .then(credentials => {
-  //         const s3Uploader: S3 = new S3({ credentials });
-  //         getS3Object(s3Uploader, imageUrl)
-  //           .then(data => resolve(data))
-  //           .catch(err => reject(err));
-  //       })
-  //       .catch(err => {
-  //         console.log(err);
-  //         reject(err);
-  //       });
-  //   });
-  // }
 }
 
 export { EditImageService };
