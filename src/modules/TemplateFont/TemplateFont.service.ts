@@ -129,6 +129,7 @@ class FontService {
             `${this.config.bucketName}`,
             `fonts/${font.originalname}`,
             font.buffer,
+            true,
           )
             .then(data => resolve(data))
             .catch(err => reject(err));

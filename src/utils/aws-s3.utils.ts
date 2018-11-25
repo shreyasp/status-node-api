@@ -109,6 +109,7 @@ async function putS3Object(
   bucketName: string,
   s3Key: string,
   file: Buffer | string,
+  useCloudFront = false,
 ): Promise<any> {
   return new Promise((resolve, reject) => {
     // NOTE: If we pass file as path, then read from the path to convert into buffer or else
@@ -126,7 +127,9 @@ async function putS3Object(
       } else if (!data) {
         reject(null);
       } else {
-        const s3Path = `https://s3.${region}.amazonaws.com/${bucketName}/${s3Key}`;
+        const s3Path = useCloudFront
+          ? `https://d30edhuczthfyp.cloudfront.net/${s3Key}`
+          : `https://status-app-prod.s3.amazonaws.com/${s3Key}`;
         resolve(s3Path);
       }
     });

@@ -182,6 +182,7 @@ class ImageService {
             `${this.config.bucketName}`,
             `images/${type}/${imageName}`,
             image.buffer,
+            true,
           )
             .then(data => resolve(data))
             .catch(err => {
