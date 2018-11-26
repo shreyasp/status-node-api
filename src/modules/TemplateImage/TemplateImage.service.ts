@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AsyncResultCallback, auto as asyncAuto } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
-import { isEmpty, map as loMap, merge as loMerge, omit, set as loSet } from 'lodash';
+import { isEmpty, map as loMap, merge as loMerge, omit, set as loSet, startCase } from 'lodash';
 import { DeepPartial, Repository } from 'typeorm';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
@@ -70,7 +70,13 @@ class ImageService {
               image.layers = [];
             } else {
               const modifiedLayers = loMap(imageWLayers.layers, layer =>
-                omit(layer, ['EntId', 'layerId', 'alignment', 'layerParent', 'isActive']),
+                omit(loSet(layer, 'displayName', startCase(layer.name)), [
+                  'EntId',
+                  'layerId',
+                  'alignment',
+                  'layerParent',
+                  'isActive',
+                ]),
               );
               loSet(imageWLayers, 'layers', modifiedLayers);
 
