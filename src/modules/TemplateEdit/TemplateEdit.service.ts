@@ -70,13 +70,22 @@ interface TemplateLayerNameObj {
 
 @Injectable()
 class EditImageService {
+  accountId: string;
+  assumedRole: string;
+  awsRegion: string;
+  bucketName: string;
+
   constructor(
     @InjectRepository(Layer) private readonly LayerRepository: Repository<Layer>,
     @InjectRepository(Image) private readonly ImageRepository: Repository<Image>,
     @InjectRepository(Font) private readonly FontRepository: Repository<Font>,
-  ) {}
-
-  config = new AppConfigService().readAppConfig();
+    config: AppConfigService,
+  ) {
+    this.accountId = config.accountId;
+    this.assumedRole = config.assumedRole;
+    this.awsRegion = config.awsRegion;
+    this.bucketName = config.bucketName;
+  }
 
   registerTemplateFonts(uniqFonts: string[]) {
     // TODO: Establish a base path where all the uploaded fonts will be stored
@@ -345,20 +354,20 @@ class EditImageService {
   async uploadImageToS3(imagePath: string): Promise<any> {
     return new Promise((resolve, reject) => {
       assumeS3Role(
-        `${this.config.accountId}`,
-        `${this.config.assumedRole}`,
+        `${this.accountId}`,
+        `${this.assumedRole}`,
         'S3-Upload-Session',
-        `${this.config.awsRegion}`,
+        `${this.awsRegion}`,
         's3:*',
-        `${this.config.bucketName}`,
+        `${this.bucketName}`,
       )
         .then(credentials => {
           const parsedPath = parse(imagePath);
           const s3Uploader: S3 = new S3({ credentials });
           putS3Object(
             s3Uploader,
-            `${this.config.awsRegion}`,
-            `${this.config.bucketName}`,
+            `${this.awsRegion}`,
+            `${this.bucketName}`,
             `images/${parsedPath.base}`,
             imagePath,
           )

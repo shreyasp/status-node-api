@@ -16,12 +16,24 @@ import { Font } from './TemplateFont.entity';
 
 @Injectable()
 class FontService {
-  constructor(@InjectRepository(Font) private readonly FontRepository: Repository<Font>) {}
+  accountId: string;
+  assumedRole: string;
+  awsRegion: string;
+  bucketName: string;
+
+  constructor(
+    @InjectRepository(Font) private readonly FontRepository: Repository<Font>,
+    config: AppConfigService,
+  ) {
+    this.accountId = config.accountId;
+    this.assumedRole = config.assumedRole;
+    this.awsRegion = config.awsRegion;
+    this.bucketName = config.bucketName;
+  }
 
   // Temporary credentials to be used for uploading font object
   // to S3.
   tempCredentials: Credentials;
-  config = new AppConfigService().readAppConfig();
 
   // Retrieve all the active Font
   findAllFonts() {
@@ -114,19 +126,19 @@ class FontService {
   async uploadFontToS3(font: any): Promise<any> {
     return new Promise((resolve, reject) => {
       assumeS3Role(
-        `${this.config.accountId}`,
-        `${this.config.assumedRole}`,
+        `${this.accountId}`,
+        `${this.assumedRole}`,
         `s3-font-upload`,
-        `${this.config.awsRegion}`,
+        `${this.awsRegion}`,
         's3:*',
-        `${this.config.bucketName}`,
+        `${this.bucketName}`,
       )
         .then(credentials => {
           const s3Uploader: S3 = new S3({ credentials });
           putS3Object(
             s3Uploader,
-            `${this.config.awsRegion}`,
-            `${this.config.bucketName}`,
+            `${this.awsRegion}`,
+            `${this.bucketName}`,
             `fonts/${font.originalname}`,
             font.buffer,
             true,

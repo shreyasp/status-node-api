@@ -1,12 +1,17 @@
-import { Global, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { join } from 'path';
 
 import { AppConfigService } from './AppConfig.service';
 
-@Global()
 @Module({
+  providers: [
+    {
+      provide: AppConfigService,
+      useValue: new AppConfigService(
+        join(__dirname, '..', '..', '..', `${process.env.NODE_ENV}.env`),
+      ),
+    },
+  ],
   exports: [AppConfigService],
-  providers: [AppConfigService],
 })
-class AppConfigModule {}
-
-export { AppConfigModule };
+export class AppConfigModule {}

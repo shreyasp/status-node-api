@@ -3,20 +3,32 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AsyncResultCallback, auto as asyncAuto } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
 import { isEmpty, map as loMap, merge as loMerge, omit, set as loSet, startCase } from 'lodash';
+import { AppConfigService } from 'modules/AppConfig/AppConfig.service';
 import { DeepPartial, Repository } from 'typeorm';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
-import { AppConfigService } from '../AppConfig/AppConfig.service';
 import { Category } from '../TemplateCategory/TemplateCategory.entity';
 import { Image } from './TemplateImage.entity';
 
 @Injectable()
 class ImageService {
-  constructor(@InjectRepository(Image) private readonly ImageRepository: Repository<Image>) {}
+  accountId: string;
+  assumedRole: string;
+  awsRegion: string;
+  bucketName: string;
+
+  constructor(
+    @InjectRepository(Image) private readonly ImageRepository: Repository<Image>,
+    config: AppConfigService,
+  ) {
+    this.accountId = config.accountId;
+    this.assumedRole = config.assumedRole;
+    this.awsRegion = config.awsRegion;
+    this.bucketName = config.bucketName;
+  }
 
   // Temporary credentials to be used for uploading image object to S3.
   tempCredentials: Credentials;
-  config = new AppConfigService().readAppConfig();
 
   findAllImages() {
     return this.ImageRepository.find({ isActive: true })
@@ -172,20 +184,20 @@ class ImageService {
   async uploadImageToS3(image: any, type: string, uniqName?: string): Promise<any> {
     return new Promise((resolve, reject) => {
       assumeS3Role(
-        `${this.config.accountId}`,
-        `${this.config.assumedRole}`,
+        `${this.accountId}`,
+        `${this.assumedRole}`,
         `s3-${type}-upload`,
-        `${this.config.awsRegion}`,
+        `${this.awsRegion}`,
         's3:*',
-        `${this.config.bucketName}`,
+        `${this.bucketName}`,
       )
         .then(credentials => {
           const s3Uploader: S3 = new S3({ credentials });
           const imageName = uniqName !== undefined ? `${uniqName}-${type}.png` : image.originalname;
           putS3Object(
             s3Uploader,
-            `${this.config.awsRegion}`,
-            `${this.config.bucketName}`,
+            `${this.awsRegion}`,
+            `${this.bucketName}`,
             `images/${type}/${imageName}`,
             image.buffer,
             true,
