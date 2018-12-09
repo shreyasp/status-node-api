@@ -20,8 +20,8 @@ export class AppConfigService {
    * @returns {string}
    * @memberof AppConfigService
    */
-  get accessKeyID(): string {
-    return this.appConfig.accessKeyID;
+  get accessKeyId(): string {
+    return this.appConfig.accessKeyId;
   }
 
   get secretAccessKey(): string {

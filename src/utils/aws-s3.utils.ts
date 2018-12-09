@@ -1,5 +1,6 @@
 import { Credentials, STS } from 'aws-sdk';
 import { readFileSync } from 'fs';
+import { join } from 'path';
 
 import { AppConfigService } from '../modules/AppConfig/AppConfig.service';
 
@@ -34,7 +35,9 @@ async function assumeS3Role(
     secretAccessKey: '',
   });
 
-  const awsConfig = getAppConfig();
+  const awsConfig = new AppConfigService(
+    join(__dirname, '..', '..', `${process.env.NODE_ENV}.env`),
+  );
 
   // Create a new instance of Simple Token Service
   const sts = new STS({
@@ -111,7 +114,9 @@ async function putS3Object(
   return new Promise((resolve, reject) => {
     // NOTE: If we pass file as path, then read from the path to convert into buffer or else
     // directly upload the buffer object
-    const awsConfig = getAppConfig();
+    const awsConfig = new AppConfigService(
+      join(__dirname, '..', '..', `${process.env.NODE_ENV}.env`),
+    );
     const params = {
       Bucket: bucketName,
       Key: s3Key,
@@ -134,34 +139,5 @@ async function putS3Object(
   });
 }
 
-// async function getS3Object(s3: AWS.S3, s3URL: string): Promise<any> {
-//   return new Promise((resolve, reject) => {
-//     const parsedURL = urlParse(s3URL);
-//     const bucketName = split(parsedURL.path, '/')[1];
-
-//     const params = {
-//       Bucket: bucketName,
-//       Key: parsedURL.path,
-//     };
-
-//     const bckgndPath = join(__dirname, '..', '..', 'images', 'bckgnd.png');
-//     const oStream = createWriteStream(bckgndPath);
-//     s3.getObject(params)
-//       .createReadStream()
-//       .pipe(oStream);
-
-//     oStream
-//       .on('finish', () =>
-//         resolve({ success: true, message: 'Downloaded file successfully from S3', bckgndPath }),
-//       )
-//       .on('error', err => reject(err));
-//   });
-// }
-
-function getAppConfig() {
-  return new AppConfigService().readAppConfig();
-}
-
 export { assumeS3Role };
 export { putS3Object };
-// export { getS3Object };
