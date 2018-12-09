@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { map as loMap, omit } from 'lodash';
+import { ceil, isEmpty, map as loMap, omit, toNumber } from 'lodash';
 import { Repository } from 'typeorm';
 
 import { Category } from './TemplateCategory.entity';
@@ -12,13 +12,43 @@ class CategoryService {
   ) {}
 
   // Retrieve all the active categories
-  findAllCategories() {
-    return this.CategoryRepository.find({ isActive: true })
-      .then(categories => {
+  findAllCategories(page: number = 1) {
+    const queryBuilder = this.CategoryRepository.createQueryBuilder('category');
+    const offset = (page - 1) * 10;
+    return queryBuilder
+      .where({ isActive: true })
+      .limit(10)
+      .offset(offset)
+      .getManyAndCount()
+      .then(data => {
+        /**
+         * getManyAndCount returns array with first element as data and
+         * second element as total number of objects irrespective of the
+         * limit value prescribed.
+         */
+        const categories = data[0];
+        const totalCategories = data[1];
+
+        if (isEmpty(categories)) {
+          return {
+            success: true,
+            message: 'No Category objects present in the database',
+            data: {
+              categories: [],
+              totalPages: 1,
+              currentPage: 1,
+            },
+          };
+        }
+
         return {
           success: true,
           message: 'Fetched all active categories successfully',
-          data: loMap(categories, c => omit(c, ['EntId', 'isActive'])),
+          data: {
+            categories: loMap(categories, c => omit(c, ['EntId', 'isActive'])),
+            totalPages: ceil(totalCategories / 10),
+            currentPage: toNumber(page),
+          },
         };
       })
       .catch(err => err);
