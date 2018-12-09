@@ -21,6 +21,7 @@ var __decorate =
 Object.defineProperty(exports, '__esModule', { value: true });
 const common_1 = require('@nestjs/common');
 const typeorm_1 = require('@nestjs/typeorm');
+const AppConfig_module_1 = require('../AppConfig/AppConfig.module');
 const TemplateFont_entity_1 = require('../TemplateFont/TemplateFont.entity');
 const TemplateImage_entity_1 = require('../TemplateImage/TemplateImage.entity');
 const TemplateImageLayer_entity_1 = require('../TemplateImageLayer/TemplateImageLayer.entity');
@@ -36,6 +37,7 @@ EditImageModule = __decorate(
           TemplateImage_entity_1.Image,
           TemplateFont_entity_1.Font,
         ]),
+        AppConfig_module_1.AppConfigModule,
       ],
       controllers: [TemplateEdit_controller_1.EditImageController],
       providers: [TemplateEdit_service_1.EditImageService],

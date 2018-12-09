@@ -21,14 +21,18 @@ var __decorate =
 Object.defineProperty(exports, '__esModule', { value: true });
 const common_1 = require('@nestjs/common');
 const typeorm_1 = require('@nestjs/typeorm');
-const TemplateFont_service_1 = require('./TemplateFont.service');
+const AppConfig_module_1 = require('../AppConfig/AppConfig.module');
 const TemplateFont_controller_1 = require('./TemplateFont.controller');
 const TemplateFont_entity_1 = require('./TemplateFont.entity');
+const TemplateFont_service_1 = require('./TemplateFont.service');
 let TemplateFontModule = class TemplateFontModule {};
 TemplateFontModule = __decorate(
   [
     common_1.Module({
-      imports: [typeorm_1.TypeOrmModule.forFeature([TemplateFont_entity_1.Font])],
+      imports: [
+        typeorm_1.TypeOrmModule.forFeature([TemplateFont_entity_1.Font]),
+        AppConfig_module_1.AppConfigModule,
+      ],
       controllers: [TemplateFont_controller_1.FontController],
       providers: [TemplateFont_service_1.FontService],
     }),

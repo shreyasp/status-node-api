@@ -65,28 +65,49 @@ const typeorm_1 = require('@nestjs/typeorm');
 const async_1 = require('async');
 const aws_sdk_1 = require('aws-sdk');
 const lodash_1 = require('lodash');
+const AppConfig_service_1 = require('modules/AppConfig/AppConfig.service');
 const typeorm_2 = require('typeorm');
 const aws_s3_utils_1 = require('../../utils/aws-s3.utils');
-const AppConfig_service_1 = require('../AppConfig/AppConfig.service');
 const TemplateImage_entity_1 = require('./TemplateImage.entity');
 let ImageService = class ImageService {
-  constructor(ImageRepository) {
+  constructor(ImageRepository, config) {
     this.ImageRepository = ImageRepository;
-    this.config = new AppConfig_service_1.AppConfigService().readAppConfig();
+    this.accountId = config.accountId;
+    this.assumedRole = config.assumedRole;
+    this.awsRegion = config.awsRegion;
+    this.bucketName = config.bucketName;
   }
-  findAllImages() {
-    return this.ImageRepository.find({ isActive: true })
-      .then(images => {
+  findAllImages(page = 1) {
+    const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
+    const offset = (page - 1) * 10;
+    return queryBuilder
+      .where({ isActive: true })
+      .limit(10)
+      .offset(offset)
+      .getManyAndCount()
+      .then(data => {
+        const images = data[0];
+        const totalImages = data[1];
         if (lodash_1.isEmpty(images))
           return {
             success: true,
             message: `No active could be fetched from the database`,
-            data: [],
+            data: {
+              images: [],
+              totalPages: 0,
+              currentPage: 1,
+            },
           };
         return {
           success: true,
           message: `Images fetched successfully`,
-          data: lodash_1.map(images, image => lodash_1.omit(image, ['EntId', 'isActive'])),
+          data: {
+            images: lodash_1.shuffle(
+              lodash_1.map(images, image => lodash_1.omit(image, ['EntId', 'isActive'])),
+            ),
+            totalPages: lodash_1.ceil(totalImages / 10),
+            currentPage: lodash_1.toNumber(page),
+          },
         };
       })
       .catch(err => ({
@@ -214,12 +235,12 @@ let ImageService = class ImageService {
       return new Promise((resolve, reject) => {
         aws_s3_utils_1
           .assumeS3Role(
-            `${this.config.accountId}`,
-            `${this.config.assumedRole}`,
+            `${this.accountId}`,
+            `${this.assumedRole}`,
             `s3-${type}-upload`,
-            `${this.config.awsRegion}`,
+            `${this.awsRegion}`,
             's3:*',
-            `${this.config.bucketName}`,
+            `${this.bucketName}`,
           )
           .then(credentials => {
             const s3Uploader = new aws_sdk_1.S3({ credentials });
@@ -228,8 +249,8 @@ let ImageService = class ImageService {
             aws_s3_utils_1
               .putS3Object(
                 s3Uploader,
-                `${this.config.awsRegion}`,
-                `${this.config.bucketName}`,
+                `${this.awsRegion}`,
+                `${this.bucketName}`,
                 `images/${type}/${imageName}`,
                 image.buffer,
                 true,
@@ -250,7 +271,7 @@ ImageService = __decorate(
   [
     common_1.Injectable(),
     __param(0, typeorm_1.InjectRepository(TemplateImage_entity_1.Image)),
-    __metadata('design:paramtypes', [typeorm_2.Repository]),
+    __metadata('design:paramtypes', [typeorm_2.Repository, AppConfig_service_1.AppConfigService]),
   ],
   ImageService,
 );

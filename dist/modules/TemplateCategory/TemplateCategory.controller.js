@@ -67,8 +67,8 @@ let CategoryController = class CategoryController {
   constructor(categoryService) {
     this.categoryService = categoryService;
   }
-  getAllCategories() {
-    return this.categoryService.findAllCategories();
+  getAllCategories(query) {
+    return this.categoryService.findAllCategories(query.page);
   }
   getCategory(id) {
     return this.categoryService.findOneCategory(id);
@@ -91,8 +91,9 @@ let CategoryController = class CategoryController {
 __decorate(
   [
     common_1.Get(),
+    __param(0, common_1.Query()),
     __metadata('design:type', Function),
-    __metadata('design:paramtypes', []),
+    __metadata('design:paramtypes', [Object]),
     __metadata('design:returntype', Object),
   ],
   CategoryController.prototype,

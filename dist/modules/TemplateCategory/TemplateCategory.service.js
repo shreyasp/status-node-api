@@ -41,13 +41,36 @@ let CategoryService = class CategoryService {
   constructor(CategoryRepository) {
     this.CategoryRepository = CategoryRepository;
   }
-  findAllCategories() {
-    return this.CategoryRepository.find({ isActive: true })
-      .then(categories => {
+  findAllCategories(page = 1) {
+    const queryBuilder = this.CategoryRepository.createQueryBuilder('category');
+    const offset = (page - 1) * 10;
+    return queryBuilder
+      .where({ isActive: true })
+      .limit(10)
+      .offset(offset)
+      .getManyAndCount()
+      .then(data => {
+        const categories = data[0];
+        const totalCategories = data[1];
+        if (lodash_1.isEmpty(categories)) {
+          return {
+            success: true,
+            message: 'No Category objects present in the database',
+            data: {
+              categories: [],
+              totalPages: 1,
+              currentPage: 1,
+            },
+          };
+        }
         return {
           success: true,
           message: 'Fetched all active categories successfully',
-          data: lodash_1.map(categories, c => lodash_1.omit(c, ['EntId', 'isActive'])),
+          data: {
+            categories: lodash_1.map(categories, c => lodash_1.omit(c, ['EntId', 'isActive'])),
+            totalPages: lodash_1.ceil(totalCategories / 10),
+            currentPage: lodash_1.toNumber(page),
+          },
         };
       })
       .catch(err => err);

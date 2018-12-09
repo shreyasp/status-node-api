@@ -70,9 +70,12 @@ const aws_s3_utils_1 = require('../../utils/aws-s3.utils');
 const AppConfig_service_1 = require('../AppConfig/AppConfig.service');
 const TemplateFont_entity_1 = require('./TemplateFont.entity');
 let FontService = class FontService {
-  constructor(FontRepository) {
+  constructor(FontRepository, config) {
     this.FontRepository = FontRepository;
-    this.config = new AppConfig_service_1.AppConfigService().readAppConfig();
+    this.accountId = config.accountId;
+    this.assumedRole = config.assumedRole;
+    this.awsRegion = config.awsRegion;
+    this.bucketName = config.bucketName;
   }
   findAllFonts() {
     return this.FontRepository.find({ isActive: true })
@@ -159,20 +162,20 @@ let FontService = class FontService {
       return new Promise((resolve, reject) => {
         aws_s3_utils_1
           .assumeS3Role(
-            `${this.config.accountId}`,
-            `${this.config.assumedRole}`,
+            `${this.accountId}`,
+            `${this.assumedRole}`,
             `s3-font-upload`,
-            `${this.config.awsRegion}`,
+            `${this.awsRegion}`,
             's3:*',
-            `${this.config.bucketName}`,
+            `${this.bucketName}`,
           )
           .then(credentials => {
             const s3Uploader = new aws_sdk_1.S3({ credentials });
             aws_s3_utils_1
               .putS3Object(
                 s3Uploader,
-                `${this.config.awsRegion}`,
-                `${this.config.bucketName}`,
+                `${this.awsRegion}`,
+                `${this.bucketName}`,
                 `fonts/${font.originalname}`,
                 font.buffer,
                 true,
@@ -189,7 +192,7 @@ FontService = __decorate(
   [
     common_1.Injectable(),
     __param(0, typeorm_1.InjectRepository(TemplateFont_entity_1.Font)),
-    __metadata('design:paramtypes', [typeorm_2.Repository]),
+    __metadata('design:paramtypes', [typeorm_2.Repository, AppConfig_service_1.AppConfigService]),
   ],
   FontService,
 );

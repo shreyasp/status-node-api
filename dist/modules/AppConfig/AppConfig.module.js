@@ -20,14 +20,21 @@ var __decorate =
   };
 Object.defineProperty(exports, '__esModule', { value: true });
 const common_1 = require('@nestjs/common');
+const path_1 = require('path');
 const AppConfig_service_1 = require('./AppConfig.service');
 let AppConfigModule = class AppConfigModule {};
 AppConfigModule = __decorate(
   [
-    common_1.Global(),
     common_1.Module({
+      providers: [
+        {
+          provide: AppConfig_service_1.AppConfigService,
+          useValue: new AppConfig_service_1.AppConfigService(
+            path_1.join(__dirname, '..', '..', '..', `${process.env.NODE_ENV}.env`),
+          ),
+        },
+      ],
       exports: [AppConfig_service_1.AppConfigService],
-      providers: [AppConfig_service_1.AppConfigService],
     }),
   ],
   AppConfigModule,

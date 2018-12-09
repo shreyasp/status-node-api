@@ -39,8 +39,8 @@ let ImageController = class ImageController {
   constructor(imageService) {
     this.imageService = imageService;
   }
-  getAllImages() {
-    return this.imageService.findAllImages();
+  getAllImages(query) {
+    return this.imageService.findAllImages(query.page);
   }
   getImage(id) {
     return this.imageService.findOneImage(id);
@@ -63,8 +63,9 @@ let ImageController = class ImageController {
 __decorate(
   [
     common_1.Get(),
+    __param(0, common_1.Query()),
     __metadata('design:type', Function),
-    __metadata('design:paramtypes', []),
+    __metadata('design:paramtypes', [Object]),
     __metadata('design:returntype', Object),
   ],
   ImageController.prototype,

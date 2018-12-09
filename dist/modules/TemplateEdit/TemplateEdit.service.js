@@ -78,11 +78,14 @@ const TemplateFont_entity_1 = require('../TemplateFont/TemplateFont.entity');
 const TemplateImage_entity_1 = require('../TemplateImage/TemplateImage.entity');
 const TemplateImageLayer_entity_1 = require('../TemplateImageLayer/TemplateImageLayer.entity');
 let EditImageService = class EditImageService {
-  constructor(LayerRepository, ImageRepository, FontRepository) {
+  constructor(LayerRepository, ImageRepository, FontRepository, config) {
     this.LayerRepository = LayerRepository;
     this.ImageRepository = ImageRepository;
     this.FontRepository = FontRepository;
-    this.config = new AppConfig_service_1.AppConfigService().readAppConfig();
+    this.accountId = config.accountId;
+    this.assumedRole = config.assumedRole;
+    this.awsRegion = config.awsRegion;
+    this.bucketName = config.bucketName;
   }
   registerTemplateFonts(uniqFonts) {
     const basePath = path_1.join(__dirname, 'fonts');
@@ -345,12 +348,12 @@ let EditImageService = class EditImageService {
       return new Promise((resolve, reject) => {
         aws_s3_utils_1
           .assumeS3Role(
-            `${this.config.accountId}`,
-            `${this.config.assumedRole}`,
+            `${this.accountId}`,
+            `${this.assumedRole}`,
             'S3-Upload-Session',
-            `${this.config.awsRegion}`,
+            `${this.awsRegion}`,
             's3:*',
-            `${this.config.bucketName}`,
+            `${this.bucketName}`,
           )
           .then(credentials => {
             const parsedPath = path_1.parse(imagePath);
@@ -358,8 +361,8 @@ let EditImageService = class EditImageService {
             aws_s3_utils_1
               .putS3Object(
                 s3Uploader,
-                `${this.config.awsRegion}`,
-                `${this.config.bucketName}`,
+                `${this.awsRegion}`,
+                `${this.bucketName}`,
                 `images/${parsedPath.base}`,
                 imagePath,
               )
@@ -381,6 +384,7 @@ EditImageService = __decorate(
       typeorm_2.Repository,
       typeorm_2.Repository,
       typeorm_2.Repository,
+      AppConfig_service_1.AppConfigService,
     ]),
   ],
   EditImageService,

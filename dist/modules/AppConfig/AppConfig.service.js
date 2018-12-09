@@ -1,36 +1,56 @@
 'use strict';
-var __decorate =
-  (this && this.__decorate) ||
-  function(decorators, target, key, desc) {
-    var c = arguments.length,
-      r =
-        c < 3
-          ? target
-          : desc === null
-          ? (desc = Object.getOwnPropertyDescriptor(target, key))
-          : desc,
-      d;
-    if (typeof Reflect === 'object' && typeof Reflect.decorate === 'function')
-      r = Reflect.decorate(decorators, target, key, desc);
-    else
-      for (var i = decorators.length - 1; i >= 0; i--)
-        if ((d = decorators[i]))
-          r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-  };
 Object.defineProperty(exports, '__esModule', { value: true });
-const common_1 = require('@nestjs/common');
-const jsonfile_1 = require('jsonfile');
-const path_1 = require('path');
-let AppConfigService = class AppConfigService {
-  constructor() {
-    this.appConfig = {};
-    this.configPath = path_1.join(__dirname, 'config', `aws-config.dev.json`);
+const dotenv = require('dotenv');
+const fs_1 = require('fs');
+const joi = require('joi');
+class AppConfigService {
+  constructor(filePath) {
+    const conf = dotenv.parse(fs_1.readFileSync(filePath));
+    this.appConfig = this.validateInput(conf);
   }
-  readAppConfig() {
-    return jsonfile_1.readFileSync(this.configPath);
+  get accessKeyId() {
+    return this.appConfig.accessKeyId;
   }
-};
-AppConfigService = __decorate([common_1.Injectable()], AppConfigService);
+  get secretAccessKey() {
+    return this.appConfig.secretAccessKey;
+  }
+  get accountId() {
+    return this.appConfig.accountId;
+  }
+  get bucketName() {
+    return this.appConfig.bucketName;
+  }
+  get assumedRole() {
+    return this.appConfig.assumedRole;
+  }
+  get awsRegion() {
+    return this.appConfig.awsRegion;
+  }
+  get cloudFrontBaseUrl() {
+    return this.appConfig.cloudFrontBaseUrl;
+  }
+  get s3BaseUrl() {
+    return this.appConfig.s3BaseUrl;
+  }
+  validateInput(appConfig) {
+    const confSchema = joi.object({
+      NODE_ENV: joi
+        .string()
+        .valid(['development', 'production'])
+        .default('development'),
+      accessKeyId: joi.string().required(),
+      secretAccessKey: joi.string().required(),
+      accountId: joi.string().required(),
+      bucketName: joi.string().default('status-app-prod'),
+      assumedRole: joi.string().default('STS-Prod-Role'),
+      awsRegion: joi.string().default('us-east-1'),
+      cloudFrontBaseUrl: joi.string().default('https://d30edhuczthfyp.cloudfront.net'),
+      s3BaseUrl: joi.string().default('https://status-app-prod.s3.amazonaws.com'),
+    });
+    const { error, value: validatedAppConfig } = joi.validate(appConfig, confSchema);
+    if (error) throw new Error(`Config validation error: ${error.message}`);
+    return validatedAppConfig;
+  }
+}
 exports.AppConfigService = AppConfigService;
 //# sourceMappingURL=AppConfig.service.js.map

@@ -30,6 +30,7 @@ var __awaiter =
 Object.defineProperty(exports, '__esModule', { value: true });
 const aws_sdk_1 = require('aws-sdk');
 const fs_1 = require('fs');
+const path_1 = require('path');
 const AppConfig_service_1 = require('../modules/AppConfig/AppConfig.service');
 function assumeS3Role(
   awsAccountId,
@@ -46,7 +47,9 @@ function assumeS3Role(
       accessKeyId: '',
       secretAccessKey: '',
     });
-    const awsConfig = getAppConfig();
+    const awsConfig = new AppConfig_service_1.AppConfigService(
+      path_1.join(__dirname, '..', '..', `${process.env.NODE_ENV}.env`),
+    );
     const sts = new aws_sdk_1.STS({
       endpoint: `https://sts.${awsRegion}.amazonaws.com`,
       accessKeyId: awsConfig.accessKeyId,
@@ -100,7 +103,9 @@ exports.assumeS3Role = assumeS3Role;
 function putS3Object(s3, region, bucketName, s3Key, file, useCloudFront = false) {
   return __awaiter(this, void 0, void 0, function*() {
     return new Promise((resolve, reject) => {
-      const awsConfig = getAppConfig();
+      const awsConfig = new AppConfig_service_1.AppConfigService(
+        path_1.join(__dirname, '..', '..', `${process.env.NODE_ENV}.env`),
+      );
       const params = {
         Bucket: bucketName,
         Key: s3Key,
@@ -123,7 +128,4 @@ function putS3Object(s3, region, bucketName, s3Key, file, useCloudFront = false)
   });
 }
 exports.putS3Object = putS3Object;
-function getAppConfig() {
-  return new AppConfig_service_1.AppConfigService().readAppConfig();
-}
 //# sourceMappingURL=aws-s3.utils.js.map
