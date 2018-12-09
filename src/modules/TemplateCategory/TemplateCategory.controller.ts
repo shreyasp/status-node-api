@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 
 import { TemplateCategoryDTO } from './dto/TemplateCategory.dto';
 import { CategoryService } from './TemplateCategory.service';
@@ -8,8 +8,8 @@ class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Get()
-  getAllCategories(): object {
-    return this.categoryService.findAllCategories();
+  getAllCategories(@Query() query): object {
+    return this.categoryService.findAllCategories(query.page);
   }
 
   @Get(':id')

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UploadedFile } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, UploadedFile } from '@nestjs/common';
 import { FileInterceptor, UseInterceptors } from '@nestjs/common';
 
 import { TemplateImageDTO } from './dto/TemplateImage.dto';
@@ -9,8 +9,8 @@ class ImageController {
   constructor(private readonly imageService: ImageService) {}
 
   @Get()
-  getAllImages(): object {
-    return this.imageService.findAllImages();
+  getAllImages(@Query() query): object {
+    return this.imageService.findAllImages(query.page);
   }
 
   @Get(':id')

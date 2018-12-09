@@ -2,7 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AsyncResultCallback, auto as asyncAuto } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
-import { isEmpty, map as loMap, merge as loMerge, omit, set as loSet, startCase } from 'lodash';
+import {
+  ceil,
+  isEmpty,
+  map as loMap,
+  merge as loMerge,
+  omit,
+  set as loSet,
+  shuffle,
+  startCase,
+  toNumber,
+} from 'lodash';
 import { AppConfigService } from 'modules/AppConfig/AppConfig.service';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -30,20 +40,42 @@ class ImageService {
   // Temporary credentials to be used for uploading image object to S3.
   tempCredentials: Credentials;
 
-  findAllImages() {
-    return this.ImageRepository.find({ isActive: true })
-      .then(images => {
+  findAllImages(page: number = 1) {
+    const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
+    const offset = (page - 1) * 10;
+    return queryBuilder
+      .where({ isActive: true })
+      .limit(10)
+      .offset(offset)
+      .getManyAndCount()
+      .then(data => {
+        /**
+         * getManyAndCount returns array with first element as data and
+         * second element as total number of objects irrespective of the
+         * limit value prescribed.
+         */
+        const images = data[0];
+        const totalImages = data[1];
+
         if (isEmpty(images))
           return {
             success: true,
             message: `No active could be fetched from the database`,
-            data: [],
+            data: {
+              images: [],
+              totalPages: 0,
+              currentPage: 1,
+            },
           };
 
         return {
           success: true,
           message: `Images fetched successfully`,
-          data: loMap(images, image => omit(image, ['EntId', 'isActive'])),
+          data: {
+            images: shuffle(loMap(images, image => omit(image, ['EntId', 'isActive']))),
+            totalPages: ceil(totalImages / 10),
+            currentPage: toNumber(page),
+          },
         };
       })
       .catch(err => ({
