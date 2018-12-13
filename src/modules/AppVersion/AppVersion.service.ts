@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { camelCase } from 'lodash';
+import { omit, startCase } from 'lodash';
 import { SemVer } from 'semver';
 import { Repository } from 'typeorm';
 
@@ -12,32 +13,67 @@ class AppVersionService {
     @InjectRepository(AppVersion) private readonly AppVerRepository: Repository<AppVersion>,
   ) {}
 
-  getVersion(appName: string): Promise<any> {
+  getVersion(clientName: string): Promise<any> {
     const queryBuilder = this.AppVerRepository.createQueryBuilder('appVersion');
     return queryBuilder
       .where({ isActive: true })
-      .andWhere('appVersion.appName = :appName', { appName })
+      .andWhere('appVersion.clientName = :clientName', { clientName })
       .getOne()
-      .then(version => version)
-      .catch(err => err);
+      .then(version => {
+        if (!version) {
+          return {
+            success: true,
+            message: `No version found for the ${clientName} client`,
+            data: null,
+          };
+        }
+
+        return {
+          success: true,
+          message: `Fetched version successfuly for ${clientName} client`,
+          data: omit(version, ['EntId', 'id', 'isActive']),
+        };
+      })
+      .catch(err => ({
+        success: false,
+        message: `Something went wrong while trying to fetch version for ${clientName}`,
+        err,
+      }));
   }
 
-  createVersion(appName: string, version: string): Promise<any> {
+  createVersion(clientName: string, version: string): Promise<any> {
     const semanticVersion = new SemVer(version);
     return this.AppVerRepository.save({
-      appName,
+      clientName,
       majorVersion: semanticVersion.major,
       minorVersion: semanticVersion.minor,
       patchVersion: semanticVersion.patch,
     })
-      .then(newVersion => newVersion)
-      .catch(err => err);
+      .then(newVersion => ({
+        success: true,
+        message: `Created a new version for ${clientName}`,
+        data: omit(newVersion, ['id', 'EntId']),
+      }))
+      .catch(err => ({
+        success: false,
+        message: `Something went while trying to create a new version for ${clientName}`,
+        err,
+      }));
   }
 
-  incrementVersion(appName: string, verBump: string): Promise<any> {
-    return this.AppVerRepository.increment({ appName }, camelCase(verBump), 1)
-      .then(data => data)
-      .catch(err => err);
+  incrementVersion(clientName: string, versionType: string): Promise<any> {
+    return this.AppVerRepository.increment({ clientName }, camelCase(versionType), 1)
+      .then(() => ({
+        success: true,
+        message: `Successfully incremented ${startCase(versionType)} for ${clientName}`,
+      }))
+      .catch(err => ({
+        success: false,
+        message: `Something went wrong while trying to increment ${startCase(
+          versionType,
+        )} for ${clientName}`,
+        err,
+      }));
   }
 }
 

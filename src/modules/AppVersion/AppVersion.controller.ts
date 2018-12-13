@@ -7,19 +7,19 @@ import { AppVersionService } from './AppVersion.service';
 class AppVersionController {
   constructor(private readonly appVersionService: AppVersionService) {}
 
-  @Get(':appName')
-  getAppVersion(@Param('appName') appName): object {
-    return this.appVersionService.getVersion(appName);
+  @Get(':clientName')
+  getAppVersion(@Param('clientName') clientName): object {
+    return this.appVersionService.getVersion(clientName);
   }
 
-  @Post(':appName/create/')
-  createAppVersion(@Param('appName') appName, @Body() reqBody): object {
-    return this.appVersionService.createVersion(appName, reqBody.version);
+  @Post(':clientName/create/')
+  createAppVersion(@Param('clientName') clientName, @Body() reqBody): object {
+    return this.appVersionService.createVersion(clientName, reqBody.version);
   }
 
-  @Post(':appName/incr/:version')
-  incrementMajorVersion(@Param('appName') appName, @Param('version') version): object {
-    return this.appVersionService.incrementVersion(appName, `${version}Version`);
+  @Post(':clientName/incr/:versionType')
+  incrementVersion(@Param('clientName') clientName, @Param('versionType') versionType): object {
+    return this.appVersionService.incrementVersion(clientName, `${versionType}Version`);
   }
 }
 

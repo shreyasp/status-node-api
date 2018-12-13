@@ -11,22 +11,22 @@ class AppVersion extends CommonEntity {
     type: 'varchar',
     length: 16,
   })
-  appName: string;
+  clientName: string;
 
   @Column({
-    type: 'decimal',
+    type: 'integer',
     default: 0,
   })
   majorVersion: number;
 
   @Column({
-    type: 'decimal',
+    type: 'integer',
     default: 0,
   })
   minorVersion: number;
 
   @Column({
-    type: 'decimal',
+    type: 'integer',
     default: 0,
   })
   patchVersion: number;
