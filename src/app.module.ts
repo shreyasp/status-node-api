@@ -4,6 +4,7 @@ import { Connection } from 'typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AppVersionModule } from './modules/AppVersion/AppVersion.module';
 import { PingController } from './modules/Ping/ping.controller';
 import { TemplateCategoryModule } from './modules/TemplateCategory/TemplateCategory.module';
 import { EditImageModule } from './modules/TemplateEdit/TemplateEdit.module';
@@ -19,6 +20,7 @@ import { TemplateLayerModule } from './modules/TemplateImageLayer/TemplateImageL
     TemplateImageModule,
     EditImageModule,
     TemplateLayerModule,
+    AppVersionModule,
   ],
   controllers: [AppController, PingController],
   providers: [AppService],
