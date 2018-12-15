@@ -180,7 +180,9 @@ class ImageService {
           success: true,
           message: 'Images fetched successfully for given category',
           data: {
-            images: loMap(images, image => omit(image, ['category', 'EntId', 'Id', 'isActive'])),
+            images: shuffle(
+              loMap(images, image => omit(image, ['category', 'EntId', 'Id', 'isActive'])),
+            ),
             totalPages: ceil(totalImages / 10),
             currentPage: toNumber(page),
           },
