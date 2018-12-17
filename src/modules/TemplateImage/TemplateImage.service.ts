@@ -144,6 +144,53 @@ class ImageService {
       }));
   }
 
+  findImageByCategoryId(category: DeepPartial<Category>, page: number = 1): Promise<any> {
+    const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
+    const offset = (page - 1) * 10;
+    return queryBuilder
+      .innerJoinAndSelect('Image.category', 'category', 'Image.category = :category', {
+        category,
+      })
+      .where({ isActive: true })
+      .limit(10)
+      .offset(offset)
+      .getManyAndCount()
+      .then(data => {
+        /**
+         * getManyAndCount returns array with first element as data and
+         * second element as total number of objects irrespective of the
+         * limit value prescribed.
+         */
+        const images = data[0];
+        const totalImages = data[1];
+
+        if (isEmpty(images)) {
+          return {
+            success: true,
+            message: 'No Images found for given category',
+            data: {
+              images,
+              totalPages: 1,
+              currentPage: page,
+            },
+          };
+        }
+
+        return {
+          success: true,
+          message: 'Images fetched successfully for given category',
+          data: {
+            images: shuffle(
+              loMap(images, image => omit(image, ['category', 'EntId', 'Id', 'isActive'])),
+            ),
+            totalPages: ceil(totalImages / 10),
+            currentPage: toNumber(page),
+          },
+        };
+      })
+      .catch(err => err);
+  }
+
   createImage(imageName: string, categoryId: DeepPartial<Category>): Promise<any> {
     return new Promise((resolve, reject) => {
       asyncAuto(

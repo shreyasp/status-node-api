@@ -18,6 +18,11 @@ class ImageController {
     return this.imageService.findOneImage(id);
   }
 
+  @Get('/byCategory/:categoryId')
+  getImagesByCategory(@Param('categoryId') categoryId): object {
+    return this.imageService.findImageByCategoryId(categoryId);
+  }
+
   @Post()
   createImage(@Body() reqBody) {
     return this.imageService.createImage(reqBody.imageName, reqBody.categoryId);
