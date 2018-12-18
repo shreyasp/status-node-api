@@ -30,6 +30,7 @@ const typeorm_1 = require('@nestjs/typeorm');
 const typeorm_2 = require('typeorm');
 const app_controller_1 = require('./app.controller');
 const app_service_1 = require('./app.service');
+const AppVersion_module_1 = require('./modules/AppVersion/AppVersion.module');
 const ping_controller_1 = require('./modules/Ping/ping.controller');
 const TemplateCategory_module_1 = require('./modules/TemplateCategory/TemplateCategory.module');
 const TemplateEdit_module_1 = require('./modules/TemplateEdit/TemplateEdit.module');
@@ -51,6 +52,7 @@ AppModule = __decorate(
         TemplateImage_module_1.TemplateImageModule,
         TemplateEdit_module_1.EditImageModule,
         TemplateImageLayer_module_1.TemplateLayerModule,
+        AppVersion_module_1.AppVersionModule,
       ],
       controllers: [app_controller_1.AppController, ping_controller_1.PingController],
       providers: [app_service_1.AppService],

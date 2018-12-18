@@ -21,23 +21,19 @@ var __decorate =
 Object.defineProperty(exports, '__esModule', { value: true });
 const common_1 = require('@nestjs/common');
 const typeorm_1 = require('@nestjs/typeorm');
-const AppConfig_module_1 = require('../AppConfig/AppConfig.module');
-const TemplateCategory_controller_1 = require('./TemplateCategory.controller');
-const TemplateCategory_entity_1 = require('./TemplateCategory.entity');
-const TemplateCategory_service_1 = require('./TemplateCategory.service');
-let TemplateCategoryModule = class TemplateCategoryModule {};
-TemplateCategoryModule = __decorate(
+const AppVersion_controller_1 = require('./AppVersion.controller');
+const AppVersion_entity_1 = require('./AppVersion.entity');
+const AppVersion_service_1 = require('./AppVersion.service');
+let AppVersionModule = class AppVersionModule {};
+AppVersionModule = __decorate(
   [
     common_1.Module({
-      imports: [
-        typeorm_1.TypeOrmModule.forFeature([TemplateCategory_entity_1.Category]),
-        AppConfig_module_1.AppConfigModule,
-      ],
-      controllers: [TemplateCategory_controller_1.CategoryController],
-      providers: [TemplateCategory_service_1.CategoryService],
+      imports: [typeorm_1.TypeOrmModule.forFeature([AppVersion_entity_1.AppVersion])],
+      controllers: [AppVersion_controller_1.AppVersionController],
+      providers: [AppVersion_service_1.AppVersionService],
     }),
   ],
-  TemplateCategoryModule,
+  AppVersionModule,
 );
-exports.TemplateCategoryModule = TemplateCategoryModule;
-//# sourceMappingURL=TemplateCategory.module.js.map
+exports.AppVersionModule = AppVersionModule;
+//# sourceMappingURL=AppVersion.module.js.map

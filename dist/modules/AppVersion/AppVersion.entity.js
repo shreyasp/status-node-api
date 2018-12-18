@@ -27,11 +27,10 @@ var __metadata =
 Object.defineProperty(exports, '__esModule', { value: true });
 const typeorm_1 = require('typeorm');
 const common_entity_1 = require('../../entities/common.entity');
-const TemplateImage_entity_1 = require('../TemplateImage/TemplateImage.entity');
-let Category = class Category extends common_entity_1.CommonEntity {};
+let AppVersion = class AppVersion extends common_entity_1.CommonEntity {};
 __decorate(
   [typeorm_1.PrimaryGeneratedColumn(), __metadata('design:type', Number)],
-  Category.prototype,
+  AppVersion.prototype,
   'id',
   void 0,
 );
@@ -39,34 +38,48 @@ __decorate(
   [
     typeorm_1.Column({
       type: 'varchar',
-      length: 64,
-      unique: true,
+      length: 16,
     }),
     __metadata('design:type', String),
   ],
-  Category.prototype,
-  'name',
+  AppVersion.prototype,
+  'clientName',
   void 0,
 );
 __decorate(
   [
     typeorm_1.Column({
-      type: 'varchar',
-      length: 64,
+      type: 'integer',
+      default: 0,
     }),
-    __metadata('design:type', String),
+    __metadata('design:type', Number),
   ],
-  Category.prototype,
-  'displayName',
+  AppVersion.prototype,
+  'majorVersion',
   void 0,
 );
 __decorate(
   [
-    typeorm_1.OneToMany(type => TemplateImage_entity_1.Image, image => image.id),
-    __metadata('design:type', TemplateImage_entity_1.Image),
+    typeorm_1.Column({
+      type: 'integer',
+      default: 0,
+    }),
+    __metadata('design:type', Number),
   ],
-  Category.prototype,
-  'image',
+  AppVersion.prototype,
+  'minorVersion',
+  void 0,
+);
+__decorate(
+  [
+    typeorm_1.Column({
+      type: 'integer',
+      default: 0,
+    }),
+    __metadata('design:type', Number),
+  ],
+  AppVersion.prototype,
+  'patchVersion',
   void 0,
 );
 __decorate(
@@ -77,23 +90,10 @@ __decorate(
     }),
     __metadata('design:type', Boolean),
   ],
-  Category.prototype,
+  AppVersion.prototype,
   'isActive',
   void 0,
 );
-__decorate(
-  [
-    typeorm_1.Column({
-      type: 'varchar',
-      length: 255,
-      nullable: true,
-    }),
-    __metadata('design:type', String),
-  ],
-  Category.prototype,
-  'categoryIconUrl',
-  void 0,
-);
-Category = __decorate([typeorm_1.Entity()], Category);
-exports.Category = Category;
-//# sourceMappingURL=TemplateCategory.entity.js.map
+AppVersion = __decorate([typeorm_1.Entity()], AppVersion);
+exports.AppVersion = AppVersion;
+//# sourceMappingURL=AppVersion.entity.js.map

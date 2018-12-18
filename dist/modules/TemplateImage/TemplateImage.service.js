@@ -165,6 +165,47 @@ let ImageService = class ImageService {
         err,
       }));
   }
+  findImageByCategoryId(category, page = 1) {
+    const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
+    const offset = (page - 1) * 10;
+    return queryBuilder
+      .innerJoinAndSelect('Image.category', 'category', 'Image.category = :category', {
+        category,
+      })
+      .where({ isActive: true })
+      .limit(10)
+      .offset(offset)
+      .getManyAndCount()
+      .then(data => {
+        const images = data[0];
+        const totalImages = data[1];
+        if (lodash_1.isEmpty(images)) {
+          return {
+            success: true,
+            message: 'No Images found for given category',
+            data: {
+              images,
+              totalPages: 1,
+              currentPage: page,
+            },
+          };
+        }
+        return {
+          success: true,
+          message: 'Images fetched successfully for given category',
+          data: {
+            images: lodash_1.shuffle(
+              lodash_1.map(images, image =>
+                lodash_1.omit(image, ['category', 'EntId', 'Id', 'isActive']),
+              ),
+            ),
+            totalPages: lodash_1.ceil(totalImages / 10),
+            currentPage: lodash_1.toNumber(page),
+          },
+        };
+      })
+      .catch(err => err);
+  }
   createImage(imageName, categoryId) {
     return new Promise((resolve, reject) => {
       async_1.auto(

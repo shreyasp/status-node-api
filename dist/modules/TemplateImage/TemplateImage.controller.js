@@ -45,6 +45,9 @@ let ImageController = class ImageController {
   getImage(id) {
     return this.imageService.findOneImage(id);
   }
+  getImagesByCategory(categoryId) {
+    return this.imageService.findImageByCategoryId(categoryId);
+  }
   createImage(reqBody) {
     return this.imageService.createImage(reqBody.imageName, reqBody.categoryId);
   }
@@ -82,6 +85,18 @@ __decorate(
   ],
   ImageController.prototype,
   'getImage',
+  null,
+);
+__decorate(
+  [
+    common_1.Get('/byCategory/:categoryId'),
+    __param(0, common_1.Param('categoryId')),
+    __metadata('design:type', Function),
+    __metadata('design:paramtypes', [Object]),
+    __metadata('design:returntype', Object),
+  ],
+  ImageController.prototype,
+  'getImagesByCategory',
   null,
 );
 __decorate(

@@ -34,12 +34,19 @@ var __param =
 Object.defineProperty(exports, '__esModule', { value: true });
 const common_1 = require('@nestjs/common');
 const typeorm_1 = require('@nestjs/typeorm');
+const aws_sdk_1 = require('aws-sdk');
 const lodash_1 = require('lodash');
+const AppConfig_service_1 = require('modules/AppConfig/AppConfig.service');
 const typeorm_2 = require('typeorm');
+const aws_s3_utils_1 = require('../../utils/aws-s3.utils');
 const TemplateCategory_entity_1 = require('./TemplateCategory.entity');
 let CategoryService = class CategoryService {
-  constructor(CategoryRepository) {
+  constructor(CategoryRepository, config) {
     this.CategoryRepository = CategoryRepository;
+    this.accountId = config.accountId;
+    this.assumedRole = config.assumedRole;
+    this.awsRegion = config.awsRegion;
+    this.bucketName = config.bucketName;
   }
   findAllCategories(page = 1) {
     const queryBuilder = this.CategoryRepository.createQueryBuilder('category');
@@ -100,12 +107,60 @@ let CategoryService = class CategoryService {
   deactivateCategory(id) {
     return this.CategoryRepository.update({ id }, { isActive: false });
   }
+  addUpdateCategoryIcon(id, icon) {
+    return new Promise((resolve, reject) => {
+      this.uploadCategoryIconToS3(icon, 'categoryIcon')
+        .then(data => {
+          this.CategoryRepository.update({ id }, { categoryIconUrl: data });
+          resolve({
+            success: true,
+            message: 'Category Icon uploaded successfully',
+          });
+        })
+        .catch(err =>
+          reject({
+            success: false,
+            message: 'Error while trying to category icon',
+            err,
+          }),
+        );
+    });
+  }
+  uploadCategoryIconToS3(icon, type) {
+    return new Promise((resolve, reject) => {
+      aws_s3_utils_1
+        .assumeS3Role(
+          `${this.accountId}`,
+          `${this.assumedRole}`,
+          `s3-${type}-upload`,
+          `${this.awsRegion}`,
+          's3:*',
+          `${this.bucketName}`,
+        )
+        .then(credentials => {
+          const s3Uploader = new aws_sdk_1.S3({ credentials });
+          const iconName = icon.originalname;
+          aws_s3_utils_1
+            .putS3Object(
+              s3Uploader,
+              `${this.awsRegion}`,
+              `${this.bucketName}`,
+              `category-icons/${iconName}`,
+              icon.buffer,
+              true,
+            )
+            .then(data => resolve(data))
+            .catch(err => reject(err));
+        })
+        .catch(err => reject(err));
+    });
+  }
 };
 CategoryService = __decorate(
   [
     common_1.Injectable(),
     __param(0, typeorm_1.InjectRepository(TemplateCategory_entity_1.Category)),
-    __metadata('design:paramtypes', [typeorm_2.Repository]),
+    __metadata('design:paramtypes', [typeorm_2.Repository, AppConfig_service_1.AppConfigService]),
   ],
   CategoryService,
 );

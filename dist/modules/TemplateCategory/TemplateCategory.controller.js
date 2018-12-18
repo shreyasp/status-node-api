@@ -61,6 +61,7 @@ var __awaiter =
   };
 Object.defineProperty(exports, '__esModule', { value: true });
 const common_1 = require('@nestjs/common');
+const common_2 = require('@nestjs/common');
 const TemplateCategory_dto_1 = require('./dto/TemplateCategory.dto');
 const TemplateCategory_service_1 = require('./TemplateCategory.service');
 let CategoryController = class CategoryController {
@@ -80,6 +81,12 @@ let CategoryController = class CategoryController {
         .then(category => category)
         .catch(err => err);
     });
+  }
+  uploadCategoryIcon(id, icon) {
+    return this.categoryService
+      .addUpdateCategoryIcon(id, icon)
+      .then(category => category)
+      .catch(err => err);
   }
   updateCategory(id, categoryDTO) {
     return this.categoryService.updateCategory(id, categoryDTO);
@@ -122,6 +129,20 @@ __decorate(
   ],
   CategoryController.prototype,
   'createCategory',
+  null,
+);
+__decorate(
+  [
+    common_1.Post(':id/categoryIcon'),
+    common_2.UseInterceptors(common_2.FileInterceptor('icon')),
+    __param(0, common_1.Param('id')),
+    __param(1, common_1.UploadedFile()),
+    __metadata('design:type', Function),
+    __metadata('design:paramtypes', [Object, Object]),
+    __metadata('design:returntype', void 0),
+  ],
+  CategoryController.prototype,
+  'uploadCategoryIcon',
   null,
 );
 __decorate(
