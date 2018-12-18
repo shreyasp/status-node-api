@@ -29,6 +29,13 @@ class Category extends CommonEntity {
     default: true,
   })
   isActive: boolean;
+
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  categoryIconUrl: string;
 }
 
 export { Category };
