@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UploadedFile,
+} from '@nestjs/common';
+import { FileInterceptor, UseInterceptors } from '@nestjs/common';
 
 import { TemplateCategoryDTO } from './dto/TemplateCategory.dto';
 import { CategoryService } from './TemplateCategory.service';
@@ -21,6 +32,15 @@ class CategoryController {
   async createCategory(@Body() categoryDTO: TemplateCategoryDTO) {
     return this.categoryService
       .createCategory(categoryDTO)
+      .then(category => category)
+      .catch(err => err);
+  }
+
+  @Post(':id/categoryIcon')
+  @UseInterceptors(FileInterceptor('icon'))
+  uploadCategoryIcon(@Param('id') id, @UploadedFile() icon) {
+    return this.categoryService
+      .addUpdateCategoryIcon(id, icon)
       .then(category => category)
       .catch(err => err);
   }
