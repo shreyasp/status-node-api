@@ -65,9 +65,9 @@ const typeorm_1 = require('@nestjs/typeorm');
 const async_1 = require('async');
 const aws_sdk_1 = require('aws-sdk');
 const lodash_1 = require('lodash');
-const AppConfig_service_1 = require('modules/AppConfig/AppConfig.service');
 const typeorm_2 = require('typeorm');
 const aws_s3_utils_1 = require('../../utils/aws-s3.utils');
+const AppConfig_service_1 = require('../AppConfig/AppConfig.service');
 const TemplateImage_entity_1 = require('./TemplateImage.entity');
 let ImageService = class ImageService {
   constructor(ImageRepository, config) {

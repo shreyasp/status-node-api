@@ -36,9 +36,9 @@ const common_1 = require('@nestjs/common');
 const typeorm_1 = require('@nestjs/typeorm');
 const aws_sdk_1 = require('aws-sdk');
 const lodash_1 = require('lodash');
-const AppConfig_service_1 = require('modules/AppConfig/AppConfig.service');
 const typeorm_2 = require('typeorm');
 const aws_s3_utils_1 = require('../../utils/aws-s3.utils');
+const AppConfig_service_1 = require('../AppConfig/AppConfig.service');
 const TemplateCategory_entity_1 = require('./TemplateCategory.entity');
 let CategoryService = class CategoryService {
   constructor(CategoryRepository, config) {

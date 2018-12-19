@@ -2,10 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { S3 } from 'aws-sdk';
 import { ceil, isEmpty, map as loMap, omit, toNumber } from 'lodash';
-import { AppConfigService } from 'modules/AppConfig/AppConfig.service';
 import { Repository } from 'typeorm';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
+import { AppConfigService } from '../AppConfig/AppConfig.service';
 import { Category } from './TemplateCategory.entity';
 
 @Injectable()

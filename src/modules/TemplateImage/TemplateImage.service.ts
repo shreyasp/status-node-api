@@ -13,10 +13,10 @@ import {
   startCase,
   toNumber,
 } from 'lodash';
-import { AppConfigService } from 'modules/AppConfig/AppConfig.service';
 import { DeepPartial, Repository } from 'typeorm';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
+import { AppConfigService } from '../AppConfig/AppConfig.service';
 import { Category } from '../TemplateCategory/TemplateCategory.entity';
 import { Image } from './TemplateImage.entity';
 
