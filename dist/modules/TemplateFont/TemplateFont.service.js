@@ -157,6 +157,15 @@ let FontService = class FontService {
   toggleFontActive(id) {
     return this.FontRepository.update({ id }, { isActive: false });
   }
+  checkIfFontExists(fontName) {
+    const queryBuilder = this.FontRepository.createQueryBuilder('font');
+    return queryBuilder
+      .select('font.fontName')
+      .where('UPPER(font.fontName) = :fontName', { fontName: lodash_1.toUpper(fontName) })
+      .getOne()
+      .then(data => (data ? { exists: true } : { exists: false }))
+      .catch(err => err);
+  }
   uploadFontToS3(font) {
     return __awaiter(this, void 0, void 0, function*() {
       return new Promise((resolve, reject) => {

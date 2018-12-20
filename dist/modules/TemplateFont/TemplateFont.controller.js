@@ -45,6 +45,9 @@ let FontController = class FontController {
   getFont(id) {
     return this.fontService.findOneFont(id);
   }
+  checkIfFontExists(fontName) {
+    return this.fontService.checkIfFontExists(fontName);
+  }
   createFont(fontFiles) {
     return this.fontService.createFont(fontFiles);
   }
@@ -73,6 +76,18 @@ __decorate(
   ],
   FontController.prototype,
   'getFont',
+  null,
+);
+__decorate(
+  [
+    common_1.Get('exists/:fontName'),
+    __param(0, common_1.Param('fontName')),
+    __metadata('design:type', Function),
+    __metadata('design:paramtypes', [Object]),
+    __metadata('design:returntype', Object),
+  ],
+  FontController.prototype,
+  'checkIfFontExists',
   null,
 );
 __decorate(
