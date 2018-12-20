@@ -7,7 +7,7 @@ import {
   ErrorCallback,
 } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
-import { split } from 'lodash';
+import { split, toUpper } from 'lodash';
 import { DeepPartial, Repository } from 'typeorm';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
@@ -121,6 +121,16 @@ class FontService {
   // would just want to activate or deactivate a font.
   toggleFontActive(id: number) {
     return this.FontRepository.update({ id }, { isActive: false });
+  }
+
+  checkIfFontExists(fontName: string): Promise<any> {
+    const queryBuilder = this.FontRepository.createQueryBuilder('font');
+    return queryBuilder
+      .select('font.fontName')
+      .where('UPPER(font.fontName) = :fontName', { fontName: toUpper(fontName) })
+      .getOne()
+      .then(data => (data ? { exists: true } : { exists: false }))
+      .catch(err => err);
   }
 
   async uploadFontToS3(font: any): Promise<any> {
