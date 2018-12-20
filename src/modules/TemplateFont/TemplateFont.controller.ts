@@ -18,6 +18,11 @@ class FontController {
     return this.fontService.findOneFont(id);
   }
 
+  @Get('exists/:fontName')
+  checkIfFontExists(@Param('fontName') fontName): object {
+    return this.fontService.checkIfFontExists(fontName);
+  }
+
   @Post()
   @UseInterceptors(FilesInterceptor('font'))
   createFont(@UploadedFiles() fontFiles) {
