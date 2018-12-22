@@ -7,7 +7,7 @@ import {
   ErrorCallback,
 } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
-import { split, toUpper } from 'lodash';
+import { isEmpty, split } from 'lodash';
 import { DeepPartial, Repository } from 'typeorm';
 
 import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
@@ -81,24 +81,36 @@ class FontService {
           createDBObject: [
             'uploadFonts',
             (results: any, autoCallback: AsyncResultCallback<{}, {}>) => {
+              const queryBuilder = this.FontRepository.createQueryBuilder('font');
               const savedFonts: DeepPartial<Font>[] = [];
               asyncEachOfSeries(
                 fonts,
                 (font, idx, eachCallback: ErrorCallback<{}>) => {
                   const fontObj: string[] = split(font.originalname, '.');
-                  this.FontRepository.save({
-                    fontPath: results.uploadFonts[idx],
-                    fontName: fontObj[0],
-                    fontExtension: fontObj[1],
-                    isActive: true,
-                  })
-                    .then(createdFont => {
-                      savedFonts.push(createdFont);
-                      eachCallback(null);
+                  queryBuilder
+                    .where('font.fontName = :fontName', { fontName: fontObj[0] })
+                    .getOne()
+                    .then(existingFont => {
+                      if (isEmpty(existingFont)) {
+                        this.FontRepository.save({
+                          fontPath: results.uploadFonts[idx],
+                          fontName: fontObj[0],
+                          fontExtension: fontObj[1],
+                          isActive: true,
+                        })
+                          .then(createdFont => {
+                            savedFonts.push(createdFont);
+                            eachCallback(null);
+                          })
+                          .catch(err => {
+                            eachCallback(err);
+                          });
+                      } else {
+                        savedFonts.push(existingFont);
+                        eachCallback(null);
+                      }
                     })
-                    .catch(err => {
-                      eachCallback(err);
-                    });
+                    .catch(err => eachCallback(err));
                 },
                 err => {
                   if (err) autoCallback(err);
@@ -121,16 +133,6 @@ class FontService {
   // would just want to activate or deactivate a font.
   toggleFontActive(id: number) {
     return this.FontRepository.update({ id }, { isActive: false });
-  }
-
-  checkIfFontExists(fontName: string): Promise<any> {
-    const queryBuilder = this.FontRepository.createQueryBuilder('font');
-    return queryBuilder
-      .select('font.fontName')
-      .where('UPPER(font.fontName) = :fontName', { fontName: toUpper(fontName) })
-      .getOne()
-      .then(data => (data ? { exists: true } : { exists: false }))
-      .catch(err => err);
   }
 
   async uploadFontToS3(font: any): Promise<any> {
