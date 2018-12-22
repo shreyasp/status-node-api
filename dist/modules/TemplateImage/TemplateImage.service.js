@@ -286,7 +286,7 @@ let ImageService = class ImageService {
           .then(credentials => {
             const s3Uploader = new aws_sdk_1.S3({ credentials });
             const imageName =
-              uniqName !== undefined ? `${uniqName}-${type}.png` : image.originalname;
+              uniqName !== undefined ? `${uniqName}-${type}.jpg` : image.originalname;
             aws_s3_utils_1
               .putS3Object(
                 s3Uploader,

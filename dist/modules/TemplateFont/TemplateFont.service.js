@@ -118,24 +118,36 @@ let FontService = class FontService {
             createDBObject: [
               'uploadFonts',
               (results, autoCallback) => {
+                const queryBuilder = this.FontRepository.createQueryBuilder('font');
                 const savedFonts = [];
                 async_1.eachOfSeries(
                   fonts,
                   (font, idx, eachCallback) => {
                     const fontObj = lodash_1.split(font.originalname, '.');
-                    this.FontRepository.save({
-                      fontPath: results.uploadFonts[idx],
-                      fontName: fontObj[0],
-                      fontExtension: fontObj[1],
-                      isActive: true,
-                    })
-                      .then(createdFont => {
-                        savedFonts.push(createdFont);
-                        eachCallback(null);
+                    queryBuilder
+                      .where('font.fontName = :fontName', { fontName: fontObj[0] })
+                      .getOne()
+                      .then(existingFont => {
+                        if (lodash_1.isEmpty(existingFont)) {
+                          this.FontRepository.save({
+                            fontPath: results.uploadFonts[idx],
+                            fontName: fontObj[0],
+                            fontExtension: fontObj[1],
+                            isActive: true,
+                          })
+                            .then(createdFont => {
+                              savedFonts.push(createdFont);
+                              eachCallback(null);
+                            })
+                            .catch(err => {
+                              eachCallback(err);
+                            });
+                        } else {
+                          savedFonts.push(existingFont);
+                          eachCallback(null);
+                        }
                       })
-                      .catch(err => {
-                        eachCallback(err);
-                      });
+                      .catch(err => eachCallback(err));
                   },
                   err => {
                     if (err) autoCallback(err);
@@ -156,15 +168,6 @@ let FontService = class FontService {
   }
   toggleFontActive(id) {
     return this.FontRepository.update({ id }, { isActive: false });
-  }
-  checkIfFontExists(fontName) {
-    const queryBuilder = this.FontRepository.createQueryBuilder('font');
-    return queryBuilder
-      .select('font.fontName')
-      .where('UPPER(font.fontName) = :fontName', { fontName: lodash_1.toUpper(fontName) })
-      .getOne()
-      .then(data => (data ? { exists: true } : { exists: false }))
-      .catch(err => err);
   }
   uploadFontToS3(font) {
     return __awaiter(this, void 0, void 0, function*() {
