@@ -187,11 +187,12 @@ let EditImageService = class EditImageService {
                 .getOne()
                 .then(image => image.templateBackgroundUrl)
                 .then(templateUrl => {
+                  console.log(templateUrl);
                   const dateString = moment().unix();
                   const imagePath = path_1.join(
                     __dirname,
                     'images',
-                    `${dateString}-background.png`,
+                    `${dateString}-background.jpg`,
                   );
                   const axiosConfig = { responseType: 'arraybuffer' };
                   axios_1.default
@@ -289,11 +290,14 @@ let EditImageService = class EditImageService {
                       const imagePath = path_1.join(
                         __dirname,
                         'images',
-                        `${dateString}-edited.png`,
+                        `${dateString}-edited.jpg`,
                       );
                       const oStream = fs_1.createWriteStream(imagePath);
-                      const pngStream = canvas.createPNGStream();
-                      pngStream.pipe(oStream);
+                      const jpegStream = canvas.createJPEGStream({
+                        compression: 95,
+                        progressive: true,
+                      });
+                      jpegStream.pipe(oStream);
                       oStream.on('finish', () => {
                         filesToCleanUp.push(imagePath);
                         imgManipCb(null, { imagePath });
