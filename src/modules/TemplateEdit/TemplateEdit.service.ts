@@ -198,8 +198,9 @@ class EditImageService {
               .getOne()
               .then(image => image.templateBackgroundUrl)
               .then(templateUrl => {
+                console.log(templateUrl);
                 const dateString = moment().unix();
-                const imagePath = join(__dirname, 'images', `${dateString}-background.png`);
+                const imagePath = join(__dirname, 'images', `${dateString}-background.jpg`);
                 const axiosConfig = { responseType: 'arraybuffer' };
 
                 axios
@@ -298,10 +299,13 @@ class EditImageService {
                 return this.placeTextLayers(id, imageMetadata, xPlacement, context)
                   .then(() => {
                     const dateString = moment().unix();
-                    const imagePath = join(__dirname, 'images', `${dateString}-edited.png`);
+                    const imagePath = join(__dirname, 'images', `${dateString}-edited.jpg`);
                     const oStream = createWriteStream(imagePath);
-                    const pngStream = canvas.createPNGStream();
-                    pngStream.pipe(oStream);
+                    const jpegStream = canvas.createJPEGStream({
+                      compression: 95,
+                      progressive: true,
+                    });
+                    jpegStream.pipe(oStream);
                     oStream.on('finish', () => {
                       filesToCleanUp.push(imagePath);
                       imgManipCb(null, { imagePath });
