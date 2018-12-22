@@ -272,7 +272,7 @@ class ImageService {
       )
         .then(credentials => {
           const s3Uploader: S3 = new S3({ credentials });
-          const imageName = uniqName !== undefined ? `${uniqName}-${type}.png` : image.originalname;
+          const imageName = uniqName !== undefined ? `${uniqName}-${type}.jpg` : image.originalname;
           putS3Object(
             s3Uploader,
             `${this.awsRegion}`,
