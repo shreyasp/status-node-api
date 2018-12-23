@@ -232,7 +232,10 @@ let ImageService = class ImageService {
   }
   toggleImageActive(id) {
     return this.ImageRepository.update({ id }, { isActive: false })
-      .then(updated => updated)
+      .then(updated => ({
+        success: true,
+        message: `Image Id: ${id} updated successfully`,
+      }))
       .catch(err => err);
   }
   uploadTemplateBackground(id, uniqName, background) {
@@ -275,8 +278,53 @@ let ImageService = class ImageService {
   }
   updateTrendingNow(id, isTrendingNow) {
     return this.ImageRepository.update({ id }, { isTrendingNow })
-      .then(updated => updated)
+      .then(updated => ({
+        success: true,
+        message: `Image Id: ${id} updated successfully`,
+      }))
       .catch(err => err);
+  }
+  getTrendingImages(page = 1) {
+    const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
+    const offset = (page - 1) * 10;
+    return queryBuilder
+      .where({ isTrendingNow: true })
+      .limit(10)
+      .offset(offset)
+      .getManyAndCount()
+      .then(data => {
+        const images = data[0];
+        const totalImages = data[1];
+        if (lodash_1.isEmpty(images)) {
+          return {
+            success: true,
+            message: 'No Images found for given category',
+            data: {
+              images,
+              totalPages: 1,
+              currentPage: page,
+            },
+          };
+        }
+        return {
+          success: true,
+          message: 'Images fetched successfully for given category',
+          data: {
+            images: lodash_1.shuffle(
+              lodash_1.map(images, image =>
+                lodash_1.omit(image, ['category', 'EntId', 'Id', 'isActive', 'isTrendingNow']),
+              ),
+            ),
+            totalPages: lodash_1.ceil(totalImages / 10),
+            currentPage: lodash_1.toNumber(page),
+          },
+        };
+      })
+      .catch(err => ({
+        success: false,
+        message: `Something went wrong while trying to fetch all active images`,
+        err,
+      }));
   }
   uploadImageToS3(image, type, uniqName) {
     return __awaiter(this, void 0, void 0, function*() {

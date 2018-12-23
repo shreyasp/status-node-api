@@ -42,6 +42,9 @@ let ImageController = class ImageController {
   getAllImages(query) {
     return this.imageService.findAllImages(query.page);
   }
+  getTrendingImages(query) {
+    return this.imageService.getTrendingImages(query.page);
+  }
   getImage(id) {
     return this.imageService.findOneImage(id);
   }
@@ -60,7 +63,7 @@ let ImageController = class ImageController {
     return this.imageService.uploadTemplate(imageId, uniqName, template).catch(err => err);
   }
   updateTrendingNow(id, reqBody) {
-    return this.imageService.updateTrendingNow(id, reqBody.isTredingNow).catch(err => err);
+    return this.imageService.updateTrendingNow(id, reqBody.isTrendingNow).catch(err => err);
   }
   toggleImageActive(id) {
     return this.imageService.toggleImageActive(id);
@@ -76,6 +79,18 @@ __decorate(
   ],
   ImageController.prototype,
   'getAllImages',
+  null,
+);
+__decorate(
+  [
+    common_1.Get('/getTrendingImages'),
+    __param(0, common_1.Query()),
+    __metadata('design:type', Function),
+    __metadata('design:paramtypes', [Object]),
+    __metadata('design:returntype', Object),
+  ],
+  ImageController.prototype,
+  'getTrendingImages',
   null,
 );
 __decorate(
