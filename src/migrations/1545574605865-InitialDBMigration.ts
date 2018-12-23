@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class InitialMigration1545212535687 implements MigrationInterface {
+export class InitialDBMigration1545574605865 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(
       `CREATE TABLE "common_entity" ("EntId" SERIAL NOT NULL, "createdDate" TIMESTAMP NOT NULL DEFAULT now(), "updatedDate" TIMESTAMP NOT NULL DEFAULT now(), "date" character varying NOT NULL, CONSTRAINT "PK_00a759ffd8d84870dc18e2e3721" PRIMARY KEY ("EntId"))`,
@@ -18,7 +18,7 @@ export class InitialMigration1545212535687 implements MigrationInterface {
       `CREATE TABLE "layer_style" ("styleId" SERIAL NOT NULL, "color" character varying, "opacity" integer, CONSTRAINT "PK_09ce90a981f4c8bfef1af272241" PRIMARY KEY ("styleId"))`,
     );
     await queryRunner.query(
-      `CREATE TABLE "layer_frame" ("frameId" SERIAL NOT NULL, "height" float NOT NULL, "width" float NOT NULL, "x" float NOT NULL, "y" float NOT NULL, CONSTRAINT "PK_fa9def263ef9c68d13c23c11452" PRIMARY KEY ("frameId"))`,
+      `CREATE TABLE "layer_frame" ("frameId" SERIAL NOT NULL, "height" float NOT NULL DEFAULT 0, "width" float NOT NULL DEFAULT 0, "x" float NOT NULL DEFAULT 0, "y" float NOT NULL DEFAULT 0, CONSTRAINT "PK_fa9def263ef9c68d13c23c11452" PRIMARY KEY ("frameId"))`,
     );
     await queryRunner.query(
       `CREATE TABLE "layer_font" ("fontId" SERIAL NOT NULL, "fontName" character varying, "fontSize" float, CONSTRAINT "PK_ab79fef35c3b7afae6719ee5224" PRIMARY KEY ("fontId"))`,

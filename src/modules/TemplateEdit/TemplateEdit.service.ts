@@ -198,7 +198,6 @@ class EditImageService {
               .getOne()
               .then(image => image.templateBackgroundUrl)
               .then(templateUrl => {
-                console.log(templateUrl);
                 const dateString = moment().unix();
                 const imagePath = join(__dirname, 'images', `${dateString}-background.jpg`);
                 const axiosConfig = { responseType: 'arraybuffer' };

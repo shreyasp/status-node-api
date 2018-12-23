@@ -35,21 +35,25 @@ class LayerFrame {
 
   @Column({
     type: 'float',
+    default: 0.0,
   })
   height: number;
 
   @Column({
     type: 'float',
+    default: 0.0,
   })
   width: number;
 
   @Column({
     type: 'float',
+    default: 0.0,
   })
   x: number;
 
   @Column({
     type: 'float',
+    default: 0.0,
   })
   y: number;
 }

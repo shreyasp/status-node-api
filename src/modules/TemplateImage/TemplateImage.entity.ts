@@ -33,6 +33,12 @@ class Image extends CommonEntity {
   })
   isActive: boolean;
 
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  isTrendingNow: boolean;
+
   @ManyToOne(type => Category, category => category.id)
   category: Category;
 

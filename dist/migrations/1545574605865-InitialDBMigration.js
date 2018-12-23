@@ -28,7 +28,7 @@ var __awaiter =
     });
   };
 Object.defineProperty(exports, '__esModule', { value: true });
-class InitialMigration1545212535687 {
+class InitialDBMigration1545574605865 {
   up(queryRunner) {
     return __awaiter(this, void 0, void 0, function*() {
       yield queryRunner.query(
@@ -47,7 +47,7 @@ class InitialMigration1545212535687 {
         `CREATE TABLE "layer_style" ("styleId" SERIAL NOT NULL, "color" character varying, "opacity" integer, CONSTRAINT "PK_09ce90a981f4c8bfef1af272241" PRIMARY KEY ("styleId"))`,
       );
       yield queryRunner.query(
-        `CREATE TABLE "layer_frame" ("frameId" SERIAL NOT NULL, "height" float NOT NULL, "width" float NOT NULL, "x" float NOT NULL, "y" float NOT NULL, CONSTRAINT "PK_fa9def263ef9c68d13c23c11452" PRIMARY KEY ("frameId"))`,
+        `CREATE TABLE "layer_frame" ("frameId" SERIAL NOT NULL, "height" float NOT NULL DEFAULT 0, "width" float NOT NULL DEFAULT 0, "x" float NOT NULL DEFAULT 0, "y" float NOT NULL DEFAULT 0, CONSTRAINT "PK_fa9def263ef9c68d13c23c11452" PRIMARY KEY ("frameId"))`,
       );
       yield queryRunner.query(
         `CREATE TABLE "layer_font" ("fontId" SERIAL NOT NULL, "fontName" character varying, "fontSize" float, CONSTRAINT "PK_ab79fef35c3b7afae6719ee5224" PRIMARY KEY ("fontId"))`,
@@ -112,5 +112,5 @@ class InitialMigration1545212535687 {
     });
   }
 }
-exports.InitialMigration1545212535687 = InitialMigration1545212535687;
-//# sourceMappingURL=1545212535687-InitialMigration.js.map
+exports.InitialDBMigration1545574605865 = InitialDBMigration1545574605865;
+//# sourceMappingURL=1545574605865-InitialDBMigration.js.map
