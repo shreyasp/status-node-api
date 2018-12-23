@@ -59,6 +59,9 @@ let ImageController = class ImageController {
   uploadTemplate(imageId, uniqName, template) {
     return this.imageService.uploadTemplate(imageId, uniqName, template).catch(err => err);
   }
+  updateTrendingNow(id, reqBody) {
+    return this.imageService.updateTrendingNow(id, reqBody.isTredingNow).catch(err => err);
+  }
   toggleImageActive(id) {
     return this.imageService.toggleImageActive(id);
   }
@@ -139,6 +142,19 @@ __decorate(
   ],
   ImageController.prototype,
   'uploadTemplate',
+  null,
+);
+__decorate(
+  [
+    common_1.Put(':id/updateTrendingNow'),
+    __param(0, common_1.Param('id')),
+    __param(1, common_1.Body()),
+    __metadata('design:type', Function),
+    __metadata('design:paramtypes', [Object, Object]),
+    __metadata('design:returntype', void 0),
+  ],
+  ImageController.prototype,
+  'updateTrendingNow',
   null,
 );
 __decorate(

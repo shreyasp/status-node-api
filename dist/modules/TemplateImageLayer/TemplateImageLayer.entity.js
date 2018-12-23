@@ -70,6 +70,7 @@ __decorate(
   [
     typeorm_1.Column({
       type: 'float',
+      default: 0.0,
     }),
     __metadata('design:type', Number),
   ],
@@ -81,6 +82,7 @@ __decorate(
   [
     typeorm_1.Column({
       type: 'float',
+      default: 0.0,
     }),
     __metadata('design:type', Number),
   ],
@@ -92,6 +94,7 @@ __decorate(
   [
     typeorm_1.Column({
       type: 'float',
+      default: 0.0,
     }),
     __metadata('design:type', Number),
   ],
@@ -103,6 +106,7 @@ __decorate(
   [
     typeorm_1.Column({
       type: 'float',
+      default: 0.0,
     }),
     __metadata('design:type', Number),
   ],

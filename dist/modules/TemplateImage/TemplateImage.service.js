@@ -231,7 +231,9 @@ let ImageService = class ImageService {
     });
   }
   toggleImageActive(id) {
-    return this.ImageRepository.update({ id }, { isActive: false });
+    return this.ImageRepository.update({ id }, { isActive: false })
+      .then(updated => updated)
+      .catch(err => err);
   }
   uploadTemplateBackground(id, uniqName, background) {
     return new Promise((resolve, reject) => {
@@ -270,6 +272,11 @@ let ImageService = class ImageService {
           }),
         );
     });
+  }
+  updateTrendingNow(id, isTrendingNow) {
+    return this.ImageRepository.update({ id }, { isTrendingNow })
+      .then(updated => updated)
+      .catch(err => err);
   }
   uploadImageToS3(image, type, uniqName) {
     return __awaiter(this, void 0, void 0, function*() {

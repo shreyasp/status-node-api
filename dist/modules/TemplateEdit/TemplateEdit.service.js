@@ -187,7 +187,6 @@ let EditImageService = class EditImageService {
                 .getOne()
                 .then(image => image.templateBackgroundUrl)
                 .then(templateUrl => {
-                  console.log(templateUrl);
                   const dateString = moment().unix();
                   const imagePath = path_1.join(
                     __dirname,

@@ -217,7 +217,12 @@ class ImageService {
   }
 
   toggleImageActive(id: number) {
-    return this.ImageRepository.update({ id }, { isActive: false });
+    return this.ImageRepository.update({ id }, { isActive: false })
+      .then(updated => ({
+        success: true,
+        message: `Image Id: ${id} updated successfully`,
+      }))
+      .catch(err => err);
   }
 
   uploadTemplateBackground(id: number, uniqName: string, background: any): Promise<any> {
@@ -258,6 +263,65 @@ class ImageService {
           }),
         );
     });
+  }
+
+  updateTrendingNow(id: number, isTrendingNow: boolean): Promise<any> {
+    return this.ImageRepository.update({ id }, { isTrendingNow })
+      .then(updated => ({
+        success: true,
+        message: `Image Id: ${id} updated successfully`,
+      }))
+      .catch(err => err);
+  }
+
+  getTrendingImages(page: number = 1): Promise<any> {
+    const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
+    const offset = (page - 1) * 10;
+    return queryBuilder
+      .where({ isTrendingNow: true })
+      .limit(10)
+      .offset(offset)
+      .getManyAndCount()
+      .then(data => {
+        /**
+         * getManyAndCount returns array with first element as data and
+         * second element as total number of objects irrespective of the
+         * limit value prescribed.
+         */
+        const images = data[0];
+        const totalImages = data[1];
+
+        if (isEmpty(images)) {
+          return {
+            success: true,
+            message: 'No Images found for given category',
+            data: {
+              images,
+              totalPages: 1,
+              currentPage: page,
+            },
+          };
+        }
+
+        return {
+          success: true,
+          message: 'Images fetched successfully for given category',
+          data: {
+            images: shuffle(
+              loMap(images, image =>
+                omit(image, ['category', 'EntId', 'Id', 'isActive', 'isTrendingNow']),
+              ),
+            ),
+            totalPages: ceil(totalImages / 10),
+            currentPage: toNumber(page),
+          },
+        };
+      })
+      .catch(err => ({
+        success: false,
+        message: `Something went wrong while trying to fetch all active images`,
+        err,
+      }));
   }
 
   async uploadImageToS3(image: any, type: string, uniqName?: string): Promise<any> {

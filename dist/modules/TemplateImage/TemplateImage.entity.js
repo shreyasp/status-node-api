@@ -86,6 +86,18 @@ __decorate(
 );
 __decorate(
   [
+    typeorm_1.Column({
+      type: 'boolean',
+      default: false,
+    }),
+    __metadata('design:type', Boolean),
+  ],
+  Image.prototype,
+  'isTrendingNow',
+  void 0,
+);
+__decorate(
+  [
     typeorm_1.ManyToOne(type => TemplateCategory_entity_1.Category, category => category.id),
     __metadata('design:type', TemplateCategory_entity_1.Category),
   ],

@@ -13,6 +13,11 @@ class ImageController {
     return this.imageService.findAllImages(query.page);
   }
 
+  @Get('/getTrendingImages')
+  getTrendingImages(@Query() query): object {
+    return this.imageService.getTrendingImages(query.page);
+  }
+
   @Get(':id')
   getImage(@Param('id') id): object {
     return this.imageService.findOneImage(id);
@@ -44,6 +49,11 @@ class ImageController {
   @UseInterceptors(FileInterceptor('template'))
   uploadTemplate(@Param('id') imageId, @Param('uniqName') uniqName, @UploadedFile() template) {
     return this.imageService.uploadTemplate(imageId, uniqName, template).catch(err => err);
+  }
+
+  @Put(':id/updateTrendingNow')
+  updateTrendingNow(@Param('id') id, @Body() reqBody) {
+    return this.imageService.updateTrendingNow(id, reqBody.isTrendingNow).catch(err => err);
   }
 
   @Put(':id')
