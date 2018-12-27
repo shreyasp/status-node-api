@@ -9,7 +9,8 @@ deploy:
   provider: releases
   api_key:
     secure: AY7jZjgrYVNiPL7g7eawa+x9MgDUfm1Y49WXKVJ0I25DO4QXqFmoNGVyjDnDIGGviGidrusjvVk26iuoD/6WTQVJkVkOATy18qMNOLZ1AX7X72icAxzhk4zBNnZ5Np7xjHy8TX6jpx2/kvpC5nxNPESJiRDEVGwSqSvYyDg5no6tYtEtZM9xcMOxuAH9kc0NRcBUgHiFE1L1H5s2KoWwbqSWZxDQIQ/4GA69X3PpOAv06j46TeOLzvMGR0m23qrUXM98Am/oIMefyDG6NlZvruu84EqIuJTzg53ctTLsKF1OKP/xdIPuN8j6vGWqPOJ0gBGA+pYv1wFy7flGBj+yNGgRu8QyGHaO4D8U3Uwd4q2B05yHQY1iLGpaHXLvWLjuv4Ej0CVynILmlCT4eKPwDhYOC+PZwT3+LJItpB30B2wlwI+Ny2cc0iZKNXdr/DomAXvKKkmxBsqLXMoVqxek8NG9fHW3PKnhty5HuowDI4lUD4x6WffJeuFtnO37HFPtvr2EIM9Nxw5Bf2/Kd88bjXUtdRWBe9HUo+29Fkvp7N/2gKDL65AdGQ75vilEu5J5y/dCfKgXPmeV2yC9GQkVXNNYm/6G2Kdwa5zNtnR7BB4i8CVUHxm7rP9RFlCNa0M4LQS0jk+NelMKvYDovNfuyEObi5tJttjj0p4sEK/ojz0=
-  file: ''
+  file: 'README.md'
+  skip_cleanup: true
   on:
     repo: shreyasp/status-node-api
     tags: true
