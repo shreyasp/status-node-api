@@ -1,6 +1,6 @@
 {
   "name": "status-rest-api",
-  "version": "0.3.8",
+  "version": "0.3.11",
   "description": "REST API for Status App consumers",
   "author": "Shreyas Patil",
   "license": "MIT",
@@ -15,7 +15,9 @@
     "test": "jest",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "webpack": "webpack --config webpack.config.js"
+    "webpack": "webpack --config webpack.config.js",
+    "preversion": "echo 'Current version: `$npm_package_version' && yarn build && echo 'Packages built successfully...'",
+    "postversion": "echo 'New version package version: `$npm_package_version`'"
   },
   "dependencies": {
     "@nestjs/common": "^5.0.0",
