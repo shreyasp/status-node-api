@@ -40,16 +40,16 @@ let ImageController = class ImageController {
     this.imageService = imageService;
   }
   getAllImages(query) {
-    return this.imageService.findAllImages(query.page);
+    return this.imageService.findAllImages(query.page, query.limit);
   }
   getTrendingImages(query) {
-    return this.imageService.getTrendingImages(query.page);
+    return this.imageService.getTrendingImages(query.page, query.limit);
   }
   getImage(id) {
     return this.imageService.findOneImage(id);
   }
-  getImagesByCategory(categoryId) {
-    return this.imageService.findImageByCategoryId(categoryId);
+  getImagesByCategory(categoryId, query) {
+    return this.imageService.findImageByCategoryId(categoryId, query.page, query.limit);
   }
   createImage(reqBody) {
     return this.imageService.createImage(reqBody.imageName, reqBody.categoryId);
@@ -109,8 +109,9 @@ __decorate(
   [
     common_1.Get('/byCategory/:categoryId'),
     __param(0, common_1.Param('categoryId')),
+    __param(1, common_1.Query()),
     __metadata('design:type', Function),
-    __metadata('design:paramtypes', [Object]),
+    __metadata('design:paramtypes', [Object, Object]),
     __metadata('design:returntype', Object),
   ],
   ImageController.prototype,

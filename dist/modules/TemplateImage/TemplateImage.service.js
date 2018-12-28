@@ -77,12 +77,12 @@ let ImageService = class ImageService {
     this.awsRegion = config.awsRegion;
     this.bucketName = config.bucketName;
   }
-  findAllImages(page = 1) {
+  findAllImages(page = 1, limit = 10) {
     const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
-    const offset = (page - 1) * 10;
+    const offset = (page - 1) * limit;
     return queryBuilder
       .where({ isActive: true })
-      .limit(10)
+      .limit(limit)
       .offset(offset)
       .getManyAndCount()
       .then(data => {
@@ -105,7 +105,7 @@ let ImageService = class ImageService {
             images: lodash_1.shuffle(
               lodash_1.map(images, image => lodash_1.omit(image, ['EntId', 'isActive'])),
             ),
-            totalPages: lodash_1.ceil(totalImages / 10),
+            totalPages: lodash_1.ceil(totalImages / limit),
             currentPage: lodash_1.toNumber(page),
           },
         };
@@ -165,15 +165,15 @@ let ImageService = class ImageService {
         err,
       }));
   }
-  findImageByCategoryId(category, page = 1) {
+  findImageByCategoryId(category, page = 1, limit = 10) {
     const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
-    const offset = (page - 1) * 10;
+    const offset = (page - 1) * limit;
     return queryBuilder
       .innerJoinAndSelect('Image.category', 'category', 'Image.category = :category', {
         category,
       })
       .where({ isActive: true })
-      .limit(10)
+      .limit(limit)
       .offset(offset)
       .getManyAndCount()
       .then(data => {
@@ -199,7 +199,7 @@ let ImageService = class ImageService {
                 lodash_1.omit(image, ['category', 'EntId', 'Id', 'isActive']),
               ),
             ),
-            totalPages: lodash_1.ceil(totalImages / 10),
+            totalPages: lodash_1.ceil(totalImages / limit),
             currentPage: lodash_1.toNumber(page),
           },
         };
@@ -284,12 +284,12 @@ let ImageService = class ImageService {
       }))
       .catch(err => err);
   }
-  getTrendingImages(page = 1) {
+  getTrendingImages(page = 1, limit = 10) {
     const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
-    const offset = (page - 1) * 10;
+    const offset = (page - 1) * limit;
     return queryBuilder
       .where({ isTrendingNow: true })
-      .limit(10)
+      .limit(limit)
       .offset(offset)
       .getManyAndCount()
       .then(data => {
@@ -315,7 +315,7 @@ let ImageService = class ImageService {
                 lodash_1.omit(image, ['category', 'EntId', 'Id', 'isActive', 'isTrendingNow']),
               ),
             ),
-            totalPages: lodash_1.ceil(totalImages / 10),
+            totalPages: lodash_1.ceil(totalImages / limit),
             currentPage: lodash_1.toNumber(page),
           },
         };

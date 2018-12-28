@@ -69,7 +69,7 @@ let CategoryController = class CategoryController {
     this.categoryService = categoryService;
   }
   getAllCategories(query) {
-    return this.categoryService.findAllCategories(query.page);
+    return this.categoryService.findAllCategories(query.page, query.limit);
   }
   getCategory(id) {
     return this.categoryService.findOneCategory(id);

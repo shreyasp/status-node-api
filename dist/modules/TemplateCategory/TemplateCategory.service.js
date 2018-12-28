@@ -48,12 +48,12 @@ let CategoryService = class CategoryService {
     this.awsRegion = config.awsRegion;
     this.bucketName = config.bucketName;
   }
-  findAllCategories(page = 1) {
+  findAllCategories(page = 1, limit = 10) {
     const queryBuilder = this.CategoryRepository.createQueryBuilder('category');
-    const offset = (page - 1) * 10;
+    const offset = (page - 1) * limit;
     return queryBuilder
       .where({ isActive: true })
-      .limit(10)
+      .limit(limit)
       .offset(offset)
       .getManyAndCount()
       .then(data => {
@@ -75,7 +75,7 @@ let CategoryService = class CategoryService {
           message: 'Fetched all active categories successfully',
           data: {
             categories: lodash_1.map(categories, c => lodash_1.omit(c, ['EntId', 'isActive'])),
-            totalPages: lodash_1.ceil(totalCategories / 10),
+            totalPages: lodash_1.ceil(totalCategories / limit),
             currentPage: lodash_1.toNumber(page),
           },
         };
