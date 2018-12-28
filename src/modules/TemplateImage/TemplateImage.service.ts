@@ -40,12 +40,12 @@ class ImageService {
   // Temporary credentials to be used for uploading image object to S3.
   tempCredentials: Credentials;
 
-  findAllImages(page: number = 1) {
+  findAllImages(page: number = 1, limit: number = 10) {
     const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
-    const offset = (page - 1) * 10;
+    const offset = (page - 1) * limit;
     return queryBuilder
       .where({ isActive: true })
-      .limit(10)
+      .limit(limit)
       .offset(offset)
       .getManyAndCount()
       .then(data => {
@@ -73,7 +73,7 @@ class ImageService {
           message: `Images fetched successfully`,
           data: {
             images: shuffle(loMap(images, image => omit(image, ['EntId', 'isActive']))),
-            totalPages: ceil(totalImages / 10),
+            totalPages: ceil(totalImages / limit),
             currentPage: toNumber(page),
           },
         };
@@ -144,15 +144,19 @@ class ImageService {
       }));
   }
 
-  findImageByCategoryId(category: DeepPartial<Category>, page: number = 1): Promise<any> {
+  findImageByCategoryId(
+    category: DeepPartial<Category>,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<any> {
     const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
-    const offset = (page - 1) * 10;
+    const offset = (page - 1) * limit;
     return queryBuilder
       .innerJoinAndSelect('Image.category', 'category', 'Image.category = :category', {
         category,
       })
       .where({ isActive: true })
-      .limit(10)
+      .limit(limit)
       .offset(offset)
       .getManyAndCount()
       .then(data => {
@@ -183,7 +187,7 @@ class ImageService {
             images: shuffle(
               loMap(images, image => omit(image, ['category', 'EntId', 'Id', 'isActive'])),
             ),
-            totalPages: ceil(totalImages / 10),
+            totalPages: ceil(totalImages / limit),
             currentPage: toNumber(page),
           },
         };
@@ -274,12 +278,12 @@ class ImageService {
       .catch(err => err);
   }
 
-  getTrendingImages(page: number = 1): Promise<any> {
+  getTrendingImages(page: number = 1, limit: number = 10): Promise<any> {
     const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
-    const offset = (page - 1) * 10;
+    const offset = (page - 1) * limit;
     return queryBuilder
       .where({ isTrendingNow: true })
-      .limit(10)
+      .limit(limit)
       .offset(offset)
       .getManyAndCount()
       .then(data => {
@@ -312,7 +316,7 @@ class ImageService {
                 omit(image, ['category', 'EntId', 'Id', 'isActive', 'isTrendingNow']),
               ),
             ),
-            totalPages: ceil(totalImages / 10),
+            totalPages: ceil(totalImages / limit),
             currentPage: toNumber(page),
           },
         };

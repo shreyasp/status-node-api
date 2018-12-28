@@ -20,7 +20,7 @@ class CategoryController {
 
   @Get()
   getAllCategories(@Query() query): object {
-    return this.categoryService.findAllCategories(query.page);
+    return this.categoryService.findAllCategories(query.page, query.limit);
   }
 
   @Get(':id')
