@@ -10,12 +10,12 @@ class ImageController {
 
   @Get()
   getAllImages(@Query() query): object {
-    return this.imageService.findAllImages(query.page);
+    return this.imageService.findAllImages(query.page, query.limit);
   }
 
   @Get('/getTrendingImages')
   getTrendingImages(@Query() query): object {
-    return this.imageService.getTrendingImages(query.page);
+    return this.imageService.getTrendingImages(query.page, query.limit);
   }
 
   @Get(':id')
@@ -24,8 +24,8 @@ class ImageController {
   }
 
   @Get('/byCategory/:categoryId')
-  getImagesByCategory(@Param('categoryId') categoryId): object {
-    return this.imageService.findImageByCategoryId(categoryId);
+  getImagesByCategory(@Param('categoryId') categoryId, @Query() query): object {
+    return this.imageService.findImageByCategoryId(categoryId, query.page, query.limit);
   }
 
   @Post()

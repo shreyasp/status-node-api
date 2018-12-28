@@ -26,12 +26,12 @@ class CategoryService {
   }
 
   // Retrieve all the active categories
-  findAllCategories(page: number = 1) {
+  findAllCategories(page: number = 1, limit: number = 10) {
     const queryBuilder = this.CategoryRepository.createQueryBuilder('category');
-    const offset = (page - 1) * 10;
+    const offset = (page - 1) * limit;
     return queryBuilder
       .where({ isActive: true })
-      .limit(10)
+      .limit(limit)
       .offset(offset)
       .getManyAndCount()
       .then(data => {
@@ -60,7 +60,7 @@ class CategoryService {
           message: 'Fetched all active categories successfully',
           data: {
             categories: loMap(categories, c => omit(c, ['EntId', 'isActive'])),
-            totalPages: ceil(totalCategories / 10),
+            totalPages: ceil(totalCategories / limit),
             currentPage: toNumber(page),
           },
         };
