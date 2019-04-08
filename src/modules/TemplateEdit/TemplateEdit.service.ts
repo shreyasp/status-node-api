@@ -109,7 +109,7 @@ class EditImageService {
         .innerJoinAndSelect('Layer.frame', 'frame')
         .innerJoin('Layer.image', 'image')
         .where('image.id = :id', { id })
-        .where('type = :type', { type: 'text' })
+        .andWhere('type = :type', { type: 'text' })
         .getMany()
         .then(fetchedLayers => {
           map(fetchedLayers, fetchedLayer => {
