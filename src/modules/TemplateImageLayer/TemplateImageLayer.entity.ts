@@ -1,13 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToOne,
-  OneToMany,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { CommonEntity } from '../../entities/common.entity';
 import { Image } from '../TemplateImage/TemplateImage.entity';

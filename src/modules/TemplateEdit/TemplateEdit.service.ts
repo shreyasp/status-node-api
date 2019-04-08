@@ -11,7 +11,7 @@ import { S3 } from 'aws-sdk';
 import axios from 'axios';
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import { createWriteStream, unlink, writeFile } from 'fs';
-import { get, map, merge, uniq } from 'lodash';
+import { ceil, get, join as loJoin, map, merge, uniq, words } from 'lodash';
 import * as moment from 'moment';
 import { join, parse } from 'path';
 import { DeepPartial, Repository } from 'typeorm';
@@ -91,7 +91,18 @@ class EditImageService {
     // TODO: Establish a base path where all the uploaded fonts will be stored
     const basePath: string = join(__dirname, 'fonts');
     asyncEach(uniqFonts, (fontName: string) => {
-      registerFont(join(basePath, `${fontName}.ttf`), { family: `${fontName}` });
+      let fontFamily = fontName;
+      let fontWeight = null;
+
+      if (words(fontName).length > 1) {
+        fontFamily = loJoin(words(fontName).slice(0, -1), ' ');
+        fontWeight = loJoin(words(fontName).slice(-1), ' ');
+      }
+
+      registerFont(join(basePath, `${fontName}.ttf`), {
+        family: `${fontFamily}`,
+        weight: `${fontWeight}`,
+      });
     });
   }
 
@@ -117,10 +128,21 @@ class EditImageService {
             const mergedLayer = merge(fetchedLayer, editedLayer);
             const font: DeepPartial<IFont> = fetchedLayer.font;
 
-            context.font = `${font.fontSize}px ${font.fontName}`;
+            const fontName =
+              words(font.fontName).length > 1
+                ? loJoin(words(font.fontName).slice(0, -1), ' ')
+                : font.fontName;
+
+            const fontWeight =
+              words(font.fontName).length > 1 ? loJoin(words(font.fontName).slice(-1), ' ') : null;
+
+            context.font = fontWeight
+              ? `${ceil(font.fontSize)}px "${fontName}" ${fontWeight}`
+              : `${ceil(font.fontSize)}px "${fontName}"`;
+
             context.fillStyle = fetchedLayer.style.color;
             context.textBaseline = 'top';
-            context.textAlign = fetchedLayer.alignment;
+            context.textAlign = fetchedLayer.alignment ? fetchedLayer.alignment : 'center';
 
             try {
               context.fillText(mergedLayer.text, xPlacement, mergedLayer.frame.y);
