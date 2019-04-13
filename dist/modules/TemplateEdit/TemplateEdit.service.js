@@ -103,7 +103,7 @@ let EditImageService = class EditImageService {
           .innerJoinAndSelect('Layer.frame', 'frame')
           .innerJoin('Layer.image', 'image')
           .where('image.id = :id', { id })
-          .where('type = :type', { type: 'text' })
+          .andWhere('type = :type', { type: 'text' })
           .getMany()
           .then(fetchedLayers => {
             lodash_1.map(fetchedLayers, fetchedLayer => {
