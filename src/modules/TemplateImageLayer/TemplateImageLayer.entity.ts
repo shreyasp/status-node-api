@@ -11,6 +11,7 @@ import {
 
 import { CommonEntity } from '../../entities/common.entity';
 import { Image } from '../TemplateImage/TemplateImage.entity';
+import { LayerMaster } from './LayerMaster.entity';
 
 @Entity()
 class LayerStyle {
@@ -122,6 +123,9 @@ class Layer extends CommonEntity {
 
   @ManyToOne(type => Image, image => image.layers)
   image: Image;
+
+  @ManyToOne(type => LayerMaster, layerMaster => layerMaster.layerMasterId)
+  layerMaster: LayerMaster;
 }
 
 export { Layer, LayerFont, LayerFrame, LayerStyle };
