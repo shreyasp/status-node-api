@@ -1,7 +1,8 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, ManyToMany } from 'typeorm';
 
 import { CommonEntity } from '../../entities/common.entity';
 import { Layer } from './TemplateImageLayer.entity';
+import { WizardPage } from '../TemplateWizardPage/TemplateWizardPage.entity';
 
 @Entity()
 class LayerMaster extends CommonEntity {
