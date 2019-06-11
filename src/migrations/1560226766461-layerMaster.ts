@@ -1,10 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class layerMaster201906101560161546936 implements MigrationInterface {
+export class layerMaster1560226766461 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(
       `CREATE TABLE "layer_master" ("EntId" SERIAL NOT NULL, "createdDate" TIMESTAMP NOT NULL DEFAULT now(), "updatedDate" TIMESTAMP NOT NULL DEFAULT now(), "layerMasterId" SERIAL NOT NULL, "layerMasterName" character varying(63) NOT NULL, "layerMasterDisplayName" character varying(63) NOT NULL, CONSTRAINT "PK_1c51f1495a9e96b5f8045600537" PRIMARY KEY ("EntId", "layerMasterId"))`,
     );
+    await queryRunner.query(`ALTER TABLE "layer" ADD "layerMasterEntId" integer`);
+    await queryRunner.query(`ALTER TABLE "layer" ADD "layerMasterLayerMasterId" integer`);
     await queryRunner.query(`ALTER TABLE "layer_frame" DROP COLUMN "height"`);
     await queryRunner.query(`ALTER TABLE "layer_frame" ADD "height" float NOT NULL DEFAULT 0`);
     await queryRunner.query(`ALTER TABLE "layer_frame" DROP COLUMN "width"`);
@@ -40,6 +42,8 @@ export class layerMaster201906101560161546936 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "layer_frame" ADD "height" double precision NOT NULL DEFAULT 0`,
     );
+    await queryRunner.query(`ALTER TABLE "layer" DROP COLUMN "layerMasterLayerMasterId"`);
+    await queryRunner.query(`ALTER TABLE "layer" DROP COLUMN "layerMasterEntId"`);
     await queryRunner.query(`DROP TABLE "layer_master"`);
   }
 }
