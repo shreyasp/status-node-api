@@ -20,6 +20,12 @@ class WizardPage extends CommonEntity {
   })
   pageNumber: number;
 
+  @Column({
+    type: 'boolean',
+    default: true,
+  })
+  isActive: boolean;
+
   @ManyToOne(type => Category, category => category.id)
   category: Category;
 
