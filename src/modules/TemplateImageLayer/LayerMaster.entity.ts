@@ -1,8 +1,8 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn, ManyToMany } from 'typeorm';
+import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { CommonEntity } from '../../entities/common.entity';
-import { Layer } from './TemplateImageLayer.entity';
 import { WizardPage } from '../TemplateWizardPage/TemplateWizardPage.entity';
+import { Layer } from './TemplateImageLayer.entity';
 
 @Entity()
 class LayerMaster extends CommonEntity {
@@ -20,9 +20,6 @@ class LayerMaster extends CommonEntity {
     length: 63,
   })
   layerMasterDisplayName: string;
-
-  @OneToMany(type => Layer, layer => layer.layerId)
-  layer: Layer;
 }
 
 export { LayerMaster };
