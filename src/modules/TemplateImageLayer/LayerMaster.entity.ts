@@ -1,7 +1,6 @@
 import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { CommonEntity } from '../../entities/common.entity';
-import { WizardPage } from '../TemplateWizardPage/TemplateWizardPage.entity';
 import { Layer } from './TemplateImageLayer.entity';
 
 @Entity()

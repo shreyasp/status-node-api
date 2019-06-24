@@ -124,8 +124,8 @@ class Layer extends CommonEntity {
   @ManyToOne(type => Image, image => image.layers)
   image: Image;
 
-  @ManyToOne(type => LayerMaster, layerMaster => layerMaster.layerMasterId)
-  layerMaster: LayerMaster;
+  @Column()
+  layerMasterId: number;
 }
 
 export { Layer, LayerFont, LayerFrame, LayerStyle };
