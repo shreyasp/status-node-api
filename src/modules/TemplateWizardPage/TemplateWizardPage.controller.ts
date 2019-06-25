@@ -8,7 +8,16 @@ class WizardPageController {
 
   @Get()
   getAllWizardPagesByCategory(@Query() query): object {
-    return this.wizardPageService.getAllWizardPagesByCategory(query.category);
+    return this.wizardPageService.getAllWizardPagesByCategory(query.categoryId);
+  }
+
+  @Post()
+  createWizardByCategory(@Body() req): object {
+    return this.wizardPageService.createWizardPageByCategory(
+      req.category,
+      req.wizardPage,
+      req.layerMasterIds,
+    );
   }
 }
 

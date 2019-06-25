@@ -1,13 +1,17 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class wizardPage1560229009872 implements MigrationInterface {
+export class addWizardPageSupport1561462820975 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<any> {
     await queryRunner.query(
-      `CREATE TABLE "wizard_page" ("EntId" SERIAL NOT NULL, "createdDate" TIMESTAMP NOT NULL DEFAULT now(), "updatedDate" TIMESTAMP NOT NULL DEFAULT now(), "pageId" SERIAL NOT NULL, "pageTitle" character varying(127) NOT NULL, "pageNumber" bigint NOT NULL, "categoryEntId" integer, "categoryId" integer, CONSTRAINT "PK_c5db6a37e6e4822949e4cf683af" PRIMARY KEY ("EntId", "pageId"))`,
+      `CREATE TABLE "wizard_page" ("EntId" SERIAL NOT NULL, "createdDate" TIMESTAMP NOT NULL DEFAULT now(), "updatedDate" TIMESTAMP NOT NULL DEFAULT now(), "pageId" SERIAL NOT NULL, "pageTitle" character varying(127) NOT NULL, "pageNumber" bigint NOT NULL, "isActive" boolean NOT NULL DEFAULT true, "categoryEntId" integer, "categoryId" integer, CONSTRAINT "PK_c5db6a37e6e4822949e4cf683af" PRIMARY KEY ("EntId", "pageId"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "layer_master" ("EntId" SERIAL NOT NULL, "createdDate" TIMESTAMP NOT NULL DEFAULT now(), "updatedDate" TIMESTAMP NOT NULL DEFAULT now(), "layerMasterId" SERIAL NOT NULL, "layerMasterName" character varying(63) NOT NULL, "layerMasterDisplayName" character varying(63) NOT NULL, CONSTRAINT "PK_1c51f1495a9e96b5f8045600537" PRIMARY KEY ("EntId", "layerMasterId"))`,
     );
     await queryRunner.query(
       `CREATE TABLE "wizard_page_layer_master_ids_layer_master" ("wizardPageEntId" integer NOT NULL, "wizardPagePageId" integer NOT NULL, "layerMasterEntId" integer NOT NULL, "layerMasterLayerMasterId" integer NOT NULL, CONSTRAINT "PK_ce3a9148671979a250723a2988d" PRIMARY KEY ("wizardPageEntId", "wizardPagePageId", "layerMasterEntId", "layerMasterLayerMasterId"))`,
     );
+    await queryRunner.query(`ALTER TABLE "layer" ADD "layerMasterId" integer NOT NULL`);
     await queryRunner.query(`ALTER TABLE "layer_frame" DROP COLUMN "height"`);
     await queryRunner.query(`ALTER TABLE "layer_frame" ADD "height" float NOT NULL DEFAULT 0`);
     await queryRunner.query(`ALTER TABLE "layer_frame" DROP COLUMN "width"`);
@@ -57,7 +61,9 @@ export class wizardPage1560229009872 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "layer_frame" ADD "height" double precision NOT NULL DEFAULT 0`,
     );
+    await queryRunner.query(`ALTER TABLE "layer" DROP COLUMN "layerMasterId"`);
     await queryRunner.query(`DROP TABLE "wizard_page_layer_master_ids_layer_master"`);
+    await queryRunner.query(`DROP TABLE "layer_master"`);
     await queryRunner.query(`DROP TABLE "wizard_page"`);
   }
 }

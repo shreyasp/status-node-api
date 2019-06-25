@@ -1,7 +1,7 @@
 import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { CommonEntity } from '../../entities/common.entity';
-import { Layer } from './TemplateImageLayer.entity';
+import { WizardPage } from '../TemplateWizardPage/TemplateWizardPage.entity';
 
 @Entity()
 class LayerMaster extends CommonEntity {
@@ -19,6 +19,9 @@ class LayerMaster extends CommonEntity {
     length: 63,
   })
   layerMasterDisplayName: string;
+
+  @ManyToMany(type => WizardPage, wizardPage => wizardPage.layerMasterIds)
+  wizardPages: WizardPage[];
 }
 
 export { LayerMaster };

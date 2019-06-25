@@ -5,6 +5,7 @@ import { DeepPartial, Repository } from 'typeorm';
 
 import { Category } from '../TemplateCategory/TemplateCategory.entity';
 import { WizardPage } from './TemplateWizardPage.entity';
+import { LayerMaster } from '../TemplateImageLayer/LayerMaster.entity';
 
 @Injectable()
 class WizardPageService {
@@ -33,11 +34,43 @@ class WizardPageService {
               totalWizardPages,
             },
           };
+        } else {
+          return {
+            success: true,
+            message: 'Successfully fetched wizard pages for the given category',
+            data: {
+              wizardPages,
+              totalWizardPages,
+            },
+          };
         }
       })
       .catch(err => ({
         success: false,
         message: 'Something went wrong while trying to retrieve wizard pages',
+        err,
+      }));
+  }
+
+  createWizardPageByCategory(
+    category: DeepPartial<Category>,
+    wizPage: WizardPage,
+    layerMasterIds: DeepPartial<LayerMaster[]>,
+  ) {
+    return this.wizardPageRepository
+      .save({
+        ...wizPage,
+        category,
+        layerMasterIds,
+      })
+      .then(createdWizPage => ({
+        success: true,
+        message: 'Created Wizard Page successfully',
+        data: createdWizPage,
+      }))
+      .catch(err => ({
+        success: false,
+        message: 'Something went wrong while creating a Wizard Page',
         err,
       }));
   }
