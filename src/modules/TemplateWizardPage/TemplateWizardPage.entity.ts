@@ -29,9 +29,9 @@ class WizardPage extends CommonEntity {
   @ManyToOne(type => Category, category => category.id)
   category: Category;
 
-  @ManyToMany(type => LayerMaster, layerMaster => layerMaster.wizardPages)
+  @ManyToMany(type => LayerMaster)
   @JoinTable()
-  layerMasterIds: LayerMaster[];
+  layerMasters: LayerMaster[];
 }
 
 export { WizardPage };

@@ -19,9 +19,6 @@ class LayerMaster extends CommonEntity {
     length: 63,
   })
   layerMasterDisplayName: string;
-
-  @ManyToMany(type => WizardPage, wizardPage => wizardPage.layerMasterIds)
-  wizardPages: WizardPage[];
 }
 
 export { LayerMaster };

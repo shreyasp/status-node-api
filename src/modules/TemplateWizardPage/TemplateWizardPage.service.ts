@@ -11,6 +11,7 @@ import { LayerMaster } from '../TemplateImageLayer/LayerMaster.entity';
 class WizardPageService {
   constructor(
     @InjectRepository(WizardPage) private readonly wizardPageRepository: Repository<WizardPage>,
+    @InjectRepository(LayerMaster) private readonly layerMasterRepository: Repository<LayerMaster>,
   ) {}
 
   getAllWizardPagesByCategory(category: DeepPartial<Category>) {
@@ -19,6 +20,7 @@ class WizardPageService {
       .innerJoinAndSelect('wizardPage.category', 'category', 'wizardPage.category = :category', {
         category,
       })
+      .leftJoinAndSelect('wizardPage.layerMasters', 'layerMasters')
       .where({ isActive: true })
       .getManyAndCount()
       .then(data => {
@@ -57,22 +59,30 @@ class WizardPageService {
     wizPage: WizardPage,
     layerMasterIds: DeepPartial<LayerMaster[]>,
   ) {
-    return this.wizardPageRepository
-      .save({
-        ...wizPage,
-        category,
-        layerMasterIds,
+    const queryBuilder = this.layerMasterRepository.createQueryBuilder('layerMaster');
+
+    return queryBuilder
+      .where('layerMaster.layerMasterId IN(:...layerMasterIds)', { layerMasterIds })
+      .getMany()
+      .then(data => {
+        return this.wizardPageRepository
+          .save({
+            ...wizPage,
+            category,
+            layerMasters: data,
+          })
+          .then(createdWizPage => ({
+            success: true,
+            message: 'Created Wizard Page successfully',
+            data: createdWizPage,
+          }))
+          .catch(err => ({
+            success: false,
+            message: 'Something went wrong while creating a Wizard Page',
+            err,
+          }));
       })
-      .then(createdWizPage => ({
-        success: true,
-        message: 'Created Wizard Page successfully',
-        data: createdWizPage,
-      }))
-      .catch(err => ({
-        success: false,
-        message: 'Something went wrong while creating a Wizard Page',
-        err,
-      }));
+      .catch(err => err);
   }
 }
 
