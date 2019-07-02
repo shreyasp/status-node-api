@@ -60,9 +60,9 @@ class LayerService {
                 isActive: true,
                 layerMasterId: layerMaster.layerMasterId,
               }).catch(err => cb(err));
-              cb(null);
             })
-            .catch(err => err);
+            .catch(err => cb(err));
+          cb(null);
         },
         err => {
           if (err) reject(err);
