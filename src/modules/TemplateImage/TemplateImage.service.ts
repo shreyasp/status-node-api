@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AsyncResultCallback, auto as asyncAuto } from 'async';
+import { AsyncResultCallback, auto as asyncAuto, eachOf as asyncEachOf } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
 import {
   ceil,
@@ -9,6 +9,8 @@ import {
   merge as loMerge,
   omit,
   set as loSet,
+  forEach as loEach,
+  find as loFind,
   shuffle,
   startCase,
   toNumber,
@@ -20,7 +22,7 @@ import { AppConfigService } from '../AppConfig/AppConfig.service';
 import { Category } from '../TemplateCategory/TemplateCategory.entity';
 import { Image } from './TemplateImage.entity';
 import { WizardPage } from '../TemplateWizardPage/TemplateWizardPage.entity';
-import { Layer } from '../TemplateImageLayer/TemplateImageLayer.entity';
+import { LayerMaster } from '../TemplateImageLayer/LayerMaster.entity';
 
 @Injectable()
 class ImageService {
@@ -31,6 +33,7 @@ class ImageService {
 
   constructor(
     @InjectRepository(Image) private readonly ImageRepository: Repository<Image>,
+    @InjectRepository(WizardPage) private readonly WizardPageRepository: Repository<WizardPage>,
     config: AppConfigService,
   ) {
     this.accountId = config.accountId;
@@ -149,7 +152,22 @@ class ImageService {
                 const wizardPages = result.getWizardPageByCategory.pages;
                 const image = result.getImageById;
 
-                transImgRespCB(null, {});
+                asyncEachOf(wizardPages, page => {
+                  const qbLayerMaster = this.WizardPageRepository.createQueryBuilder('wizardPage');
+                  qbLayerMaster
+                    .leftJoinAndSelect('wizardPage.layerMasters', 'layerMaster')
+                    .getOne()
+                    .then(data => {
+                      const resp = loMap(data.layerMasters, layerMaster => {
+                        const index = loFind(
+                          layers,
+                          o => o.layerMasterId === layerMaster.layerMasterId,
+                        );
+                        console.log(index);
+                      });
+                    })
+                    .catch(err => transImgRespCB(err));
+                });
               }
             },
           ],
