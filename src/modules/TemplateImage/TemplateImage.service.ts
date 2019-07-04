@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AsyncResultCallback, auto as asyncAuto, eachOf as asyncEachOf } from 'async';
+import { AsyncResultCallback, auto as asyncAuto, mapValues as asyncMapValues } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
 import {
   ceil,
@@ -9,7 +9,6 @@ import {
   merge as loMerge,
   omit,
   set as loSet,
-  forEach as loEach,
   find as loFind,
   shuffle,
   startCase,
@@ -22,7 +21,6 @@ import { AppConfigService } from '../AppConfig/AppConfig.service';
 import { Category } from '../TemplateCategory/TemplateCategory.entity';
 import { Image } from './TemplateImage.entity';
 import { WizardPage } from '../TemplateWizardPage/TemplateWizardPage.entity';
-import { LayerMaster } from '../TemplateImageLayer/LayerMaster.entity';
 
 @Injectable()
 class ImageService {
@@ -150,24 +148,49 @@ class ImageService {
               else {
                 const layers = result.getLayersForImage.layers;
                 const wizardPages = result.getWizardPageByCategory.pages;
-                const image = result.getImageById;
+                let image = result.getImageById;
 
-                asyncEachOf(wizardPages, page => {
-                  const qbLayerMaster = this.WizardPageRepository.createQueryBuilder('wizardPage');
-                  qbLayerMaster
-                    .leftJoinAndSelect('wizardPage.layerMasters', 'layerMaster')
-                    .getOne()
-                    .then(data => {
-                      const resp = loMap(data.layerMasters, layerMaster => {
-                        const index = loFind(
-                          layers,
-                          o => o.layerMasterId === layerMaster.layerMasterId,
-                        );
-                        console.log(index);
-                      });
-                    })
-                    .catch(err => transImgRespCB(err));
-                });
+                asyncMapValues(
+                  wizardPages,
+                  (page: any, index, cb) => {
+                    const qbLayerMaster = this.WizardPageRepository.createQueryBuilder(
+                      'wizardPage',
+                    );
+                    qbLayerMaster
+                      .leftJoinAndSelect('wizardPage.layerMasters', 'layerMaster')
+                      .getOne()
+                      .then(data => data.layerMasters)
+                      .then(layerMasters => {
+                        const mappedLayers = loMap(layerMasters, layerMaster => {
+                          const l = loFind(
+                            layers,
+                            o => o.layerMasterId === layerMaster.layerMasterId,
+                          );
+
+                          return omit(loSet(l, 'displayName', startCase(l.name)), [
+                            'EntId',
+                            'layerId',
+                            'alignment',
+                            'layerParent',
+                            'isActive',
+                            'layerMasterId',
+                          ]);
+                        });
+                        page = omit(loSet(page, 'layers', mappedLayers), [
+                          'EntId',
+                          'pageId',
+                          'isActive',
+                        ]);
+                        image = loSet(image, `pages.[${index}]`, page);
+                        cb(null, image);
+                      })
+                      .catch(err => transImgRespCB(err));
+                  },
+                  (err, results) => {
+                    if (err) transImgRespCB(err);
+                    else transImgRespCB(null, results);
+                  },
+                );
               }
             },
           ],
@@ -188,110 +211,15 @@ class ImageService {
                 data: {},
               });
             }
-            resolve(result);
+            resolve({
+              success: true,
+              message: `Successfully retrieved Image with Id: ${id}`,
+              data: omit(result.transformImageResp[0], ['EntId', 'isActive']),
+            });
           }
         },
       );
     });
-
-    // return queryBuilder
-    //   .where('id = :id', { id })
-    //   .andWhere('Image.isActive = :isActive', { isActive: true })
-    //   .getOne()
-    //   .then(image => {
-    //     // NOTE: No Image exists within the database, so just return the back message
-    //     if (isEmpty(image)) {
-    //       return {
-    //         success: true,
-    //         message: `No Image with id:${id} found in the database`,
-    //         data: image,
-    //       };
-    //     }
-
-    //     // Get Wizard Pages for Image Category
-    //     return asyncAuto(
-    //       {
-    //     //     getPagesByImageCategory: [
-    //     //       (getPageCb: AsyncResultCallback<{}, {}>) => {
-    //     //         console.log(image);
-    //     //         queryBuilder
-    //     //           .leftJoinAndSelect(WizardPage, 'wizardPage', 'wizardPage.category = Image.category')
-    //     //           .getMany()
-    //     //           .then(data => getPageCb(null, data))
-    //     //           .catch(err => getPageCb(err));
-    //     //       },
-    //     //     ],
-    //         getLayersForImage: [
-    //           (getLayersCb: AsyncResultCallback<{}, {}>) => {
-    //             queryBuilder
-    //               .innerJoinAndSelect('Image.layers', 'layer')
-    //               .where('id = :id', { id })
-    //               .andWhere('layer.type = :type', { type: 'text' })
-    //               .getOne()
-    //               .then(layers => getLayersCb(null, layers))
-    //               .catch(err => getLayersCb(err));
-    //           },
-    //         ],
-    //     //     mergeLayerWizPage: [
-    //     //       'getPagesByImageCategory', 'getLayerForImage',
-    //     //       (result: any, mergeDataCb: AsyncResultCallback<{}, {}>) => {
-    //     //         mergeDataCb(null, result);
-    //     //       },
-    //     //     ],
-    //       },
-    //       (err: Error, result: any) => {
-    //         if (err) {
-    //           console.log(err);
-    //           return err;
-    //         }
-    //         else {
-    //           console.log(result);
-    //           return result;
-    //         }
-    //       },
-    //     );
-
-    //     // NOTE: If Image exists, we need to check whether we have layers for the image
-    //     return queryBuilder
-    //       .innerJoinAndSelect('Image.layers', 'layer')
-    //       .where('id = :id', { id })
-    //       .andWhere('layer.type = :type', { type: 'text' })
-    //       .getOne()
-    //       .then(imageWLayers => {
-    //         // NOTE: We don't have layers information and so we will just respond back with the
-    //         // empty layer array in the response.
-    //         if (isEmpty(imageWLayers)) {
-    //           image.layers = [];
-    //         } else {
-    //           const modifiedLayers = loMap(imageWLayers.layers, layer =>
-    //             omit(loSet(layer, 'displayName', startCase(layer.name)), [
-    //               'EntId',
-    //               'layerId',
-    //               'alignment',
-    //               'layerParent',
-    //               'isActive',
-    //             ]),
-    //           );
-    //           loSet(imageWLayers, 'layers', modifiedLayers);
-
-    //           // NOTE: After post-processing Image with Layers merge with Image object before
-    //           // sending the response
-    //           loMerge(image, imageWLayers);
-    //         }
-
-    //         return {
-    //           success: true,
-    //           message: `Image for id: ${id} successfully retrieved`,
-    //           data: omit(image, ['isActive', 'EntId']),
-    //         };
-    //       })
-    //       .catch(err => err);
-    //   })
-    //   .catch(err => ({
-    //     success: false,
-    //     message: `Something went wrong while trying to get the Image with id: ${id}`,
-    //     err,
-    //   }));
   }
 
   findImageByCategoryId(
