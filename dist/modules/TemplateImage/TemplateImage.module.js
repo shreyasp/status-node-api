@@ -25,12 +25,16 @@ const AppConfig_module_1 = require('../AppConfig/AppConfig.module');
 const TemplateImage_controller_1 = require('./TemplateImage.controller');
 const TemplateImage_entity_1 = require('./TemplateImage.entity');
 const TemplateImage_service_1 = require('./TemplateImage.service');
+const TemplateWizardPage_entity_1 = require('../TemplateWizardPage/TemplateWizardPage.entity');
 let TemplateImageModule = class TemplateImageModule {};
 TemplateImageModule = __decorate(
   [
     common_1.Module({
       imports: [
-        typeorm_1.TypeOrmModule.forFeature([TemplateImage_entity_1.Image]),
+        typeorm_1.TypeOrmModule.forFeature([
+          TemplateImage_entity_1.Image,
+          TemplateWizardPage_entity_1.WizardPage,
+        ]),
         AppConfig_module_1.AppConfigModule,
       ],
       controllers: [TemplateImage_controller_1.ImageController],

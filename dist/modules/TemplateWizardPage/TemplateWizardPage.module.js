@@ -21,33 +21,25 @@ var __decorate =
 Object.defineProperty(exports, '__esModule', { value: true });
 const common_1 = require('@nestjs/common');
 const typeorm_1 = require('@nestjs/typeorm');
-const TemplateImageLayer_entity_1 = require('./TemplateImageLayer.entity');
-const TemplateImageLayer_service_1 = require('./TemplateImageLayer.service');
-const TemplateImageLayer_controller_1 = require('./TemplateImageLayer.controller');
-const LayerMaster_entity_1 = require('./LayerMaster.entity');
-const LayerMaster_service_1 = require('./LayerMaster.service');
-const LayerMaster_controller_1 = require('./LayerMaster.controller');
-let TemplateLayerModule = class TemplateLayerModule {};
-TemplateLayerModule = __decorate(
+const TemplateWizardPage_entity_1 = require('./TemplateWizardPage.entity');
+const TemplateWizardPage_service_1 = require('./TemplateWizardPage.service');
+const TemplateWizardPage_controller_1 = require('./TemplateWizardPage.controller');
+const LayerMaster_entity_1 = require('../TemplateImageLayer/LayerMaster.entity');
+let WizardPageModule = class WizardPageModule {};
+WizardPageModule = __decorate(
   [
     common_1.Module({
       imports: [
         typeorm_1.TypeOrmModule.forFeature([
-          TemplateImageLayer_entity_1.Layer,
           LayerMaster_entity_1.LayerMaster,
+          TemplateWizardPage_entity_1.WizardPage,
         ]),
       ],
-      controllers: [
-        TemplateImageLayer_controller_1.LayerController,
-        LayerMaster_controller_1.LayerMasterController,
-      ],
-      providers: [
-        TemplateImageLayer_service_1.LayerService,
-        LayerMaster_service_1.LayerMasterService,
-      ],
+      controllers: [TemplateWizardPage_controller_1.WizardPageController],
+      providers: [TemplateWizardPage_service_1.WizardPageService],
     }),
   ],
-  TemplateLayerModule,
+  WizardPageModule,
 );
-exports.TemplateLayerModule = TemplateLayerModule;
-//# sourceMappingURL=TemplateImageLayer.module.js.map
+exports.WizardPageModule = WizardPageModule;
+//# sourceMappingURL=TemplateWizardPage.module.js.map

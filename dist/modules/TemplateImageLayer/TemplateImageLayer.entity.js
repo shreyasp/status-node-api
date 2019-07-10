@@ -246,6 +246,12 @@ __decorate(
   'image',
   void 0,
 );
+__decorate(
+  [typeorm_1.Column(), __metadata('design:type', Number)],
+  Layer.prototype,
+  'layerMasterId',
+  void 0,
+);
 Layer = __decorate([typeorm_1.Entity()], Layer);
 exports.Layer = Layer;
 //# sourceMappingURL=TemplateImageLayer.entity.js.map

@@ -37,10 +37,12 @@ const typeorm_1 = require('@nestjs/typeorm');
 const async_1 = require('async');
 const lodash_1 = require('lodash');
 const typeorm_2 = require('typeorm');
+const LayerMaster_entity_1 = require('./LayerMaster.entity');
 const TemplateImageLayer_entity_1 = require('./TemplateImageLayer.entity');
 let LayerService = class LayerService {
-  constructor(LayerRepository) {
+  constructor(LayerRepository, LayerMasterRepository) {
     this.LayerRepository = LayerRepository;
+    this.LayerMasterRepository = LayerMasterRepository;
   }
   getImageRelatedLayers(id) {
     const queryBuilder = this.LayerRepository.createQueryBuilder('Layer');
@@ -69,12 +71,25 @@ let LayerService = class LayerService {
   }
   createUpdateTemplateLayers(imageId, layers) {
     return new Promise((resolve, reject) => {
+      const queryBuilder = this.LayerMasterRepository.createQueryBuilder('LayerMaster');
       async_1.eachOf(
         layers,
         (layer, layerName, cb) => {
-          this.LayerRepository.save(
-            Object.assign({}, layer, { name: layerName, image: imageId, isActive: true }),
-          ).catch(err => cb(err));
+          queryBuilder
+            .select('LayerMaster.layerMasterId')
+            .where('LayerMaster.layerMasterName = :layerName', { layerName })
+            .getOne()
+            .then(layerMaster => {
+              this.LayerRepository.save(
+                Object.assign({}, layer, {
+                  name: layerName,
+                  image: imageId,
+                  isActive: true,
+                  layerMasterId: layerMaster.layerMasterId,
+                }),
+              ).catch(err => cb(err));
+            })
+            .catch(err => cb(err));
           cb(null);
         },
         err => {
@@ -89,7 +104,8 @@ LayerService = __decorate(
   [
     common_1.Injectable(),
     __param(0, typeorm_1.InjectRepository(TemplateImageLayer_entity_1.Layer)),
-    __metadata('design:paramtypes', [typeorm_2.Repository]),
+    __param(1, typeorm_1.InjectRepository(LayerMaster_entity_1.LayerMaster)),
+    __metadata('design:paramtypes', [typeorm_2.Repository, typeorm_2.Repository]),
   ],
   LayerService,
 );

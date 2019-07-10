@@ -69,9 +69,11 @@ const typeorm_2 = require('typeorm');
 const aws_s3_utils_1 = require('../../utils/aws-s3.utils');
 const AppConfig_service_1 = require('../AppConfig/AppConfig.service');
 const TemplateImage_entity_1 = require('./TemplateImage.entity');
+const TemplateWizardPage_entity_1 = require('../TemplateWizardPage/TemplateWizardPage.entity');
 let ImageService = class ImageService {
-  constructor(ImageRepository, config) {
+  constructor(ImageRepository, WizardPageRepository, config) {
     this.ImageRepository = ImageRepository;
+    this.WizardPageRepository = WizardPageRepository;
     this.accountId = config.accountId;
     this.assumedRole = config.assumedRole;
     this.awsRegion = config.awsRegion;
@@ -117,53 +119,138 @@ let ImageService = class ImageService {
       }));
   }
   findOneImage(id) {
-    const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
-    return queryBuilder
-      .where('id = :id', { id })
-      .andWhere('Image.isActive = :isActive', { isActive: true })
-      .getOne()
-      .then(image => {
-        if (lodash_1.isEmpty(image)) {
-          return {
-            success: true,
-            message: `No Image with id:${id} found in the database`,
-            data: image,
-          };
-        }
-        return queryBuilder
-          .innerJoinAndSelect('Image.layers', 'layer')
-          .where('id = :id', { id })
-          .andWhere('layer.type = :type', { type: 'text' })
-          .getOne()
-          .then(imageWLayers => {
-            if (lodash_1.isEmpty(imageWLayers)) {
-              image.layers = [];
-            } else {
-              const modifiedLayers = lodash_1.map(imageWLayers.layers, layer =>
-                lodash_1.omit(lodash_1.set(layer, 'displayName', lodash_1.startCase(layer.name)), [
-                  'EntId',
-                  'layerId',
-                  'alignment',
-                  'layerParent',
-                  'isActive',
-                ]),
-              );
-              lodash_1.set(imageWLayers, 'layers', modifiedLayers);
-              lodash_1.merge(image, imageWLayers);
+    return new Promise((resolve, reject) => {
+      async_1.auto(
+        {
+          getImageById: [
+            getImageCB => {
+              const qBImage = this.ImageRepository.createQueryBuilder('Image');
+              qBImage
+                .where('id = :id', { id })
+                .andWhere('Image.isActive = :isActive', { isActive: true })
+                .getOne()
+                .then(image => {
+                  if (lodash_1.isEmpty(image)) getImageCB(null, false);
+                  else getImageCB(null, image);
+                })
+                .catch(err => getImageCB(err));
+            },
+          ],
+          getLayersForImage: [
+            'getImageById',
+            (result, getLayerCB) => {
+              if (!result.getImageById) getLayerCB(null, {});
+              else {
+                const qbLayers = this.ImageRepository.createQueryBuilder('Image');
+                qbLayers
+                  .innerJoinAndSelect('Image.layers', 'layer')
+                  .where('layer.type = :type', { type: 'text' })
+                  .getOne()
+                  .then(layers => getLayerCB(null, layers))
+                  .catch(err => getLayerCB(err));
+              }
+            },
+          ],
+          getWizardPageByCategory: [
+            'getImageById',
+            (result, getWizardPageCB) => {
+              if (!result.getImageById) getWizardPageCB(null, {});
+              else {
+                const qbWizardPage = this.ImageRepository.createQueryBuilder('Image');
+                qbWizardPage
+                  .leftJoinAndMapMany(
+                    'Image.pages',
+                    TemplateWizardPage_entity_1.WizardPage,
+                    'wizardPage',
+                    'wizardPage.category = Image.category',
+                  )
+                  .getOne()
+                  .then(data => getWizardPageCB(null, data))
+                  .catch(err => getWizardPageCB(err));
+              }
+            },
+          ],
+          transformImageResp: [
+            'getLayersForImage',
+            'getWizardPageByCategory',
+            (result, transImgRespCB) => {
+              if (!result.getImageById) transImgRespCB(null, {});
+              else {
+                const layers = result.getLayersForImage.layers;
+                const wizardPages = result.getWizardPageByCategory.pages;
+                let image = result.getImageById;
+                async_1.mapValues(
+                  wizardPages,
+                  (page, index, cb) => {
+                    const qbLayerMaster = this.WizardPageRepository.createQueryBuilder(
+                      'wizardPage',
+                    );
+                    qbLayerMaster
+                      .leftJoinAndSelect('wizardPage.layerMasters', 'layerMaster')
+                      .getOne()
+                      .then(data => data.layerMasters)
+                      .then(layerMasters => {
+                        const mappedLayers = lodash_1.map(layerMasters, layerMaster => {
+                          const l = lodash_1.find(
+                            layers,
+                            o => o.layerMasterId === layerMaster.layerMasterId,
+                          );
+                          return lodash_1.omit(
+                            lodash_1.set(l, 'displayName', lodash_1.startCase(l.name)),
+                            [
+                              'EntId',
+                              'layerId',
+                              'alignment',
+                              'layerParent',
+                              'isActive',
+                              'layerMasterId',
+                            ],
+                          );
+                        });
+                        page = lodash_1.omit(lodash_1.set(page, 'layers', mappedLayers), [
+                          'EntId',
+                          'pageId',
+                          'isActive',
+                        ]);
+                        image = lodash_1.set(image, `pages.[${index}]`, page);
+                        cb(null, image);
+                      })
+                      .catch(err => transImgRespCB(err));
+                  },
+                  (err, results) => {
+                    if (err) transImgRespCB(err);
+                    else transImgRespCB(null, results);
+                  },
+                );
+              }
+            },
+          ],
+        },
+        Infinity,
+        (err, result) => {
+          if (err) {
+            reject({
+              success: false,
+              message: `Something went wrong while trying to get the Image with id: ${id}`,
+              err,
+            });
+          } else {
+            if (!result.getImageById) {
+              resolve({
+                success: true,
+                message: `No Image with id:${id} found in the database`,
+                data: {},
+              });
             }
-            return {
+            resolve({
               success: true,
-              message: `Image for id: ${id} successfully retrieved`,
-              data: lodash_1.omit(image, ['isActive', 'EntId']),
-            };
-          })
-          .catch(err => err);
-      })
-      .catch(err => ({
-        success: false,
-        message: `Something went wrong while trying to get the Image with id: ${id}`,
-        err,
-      }));
+              message: `Successfully retrieved Image with Id: ${id}`,
+              data: lodash_1.omit(result.transformImageResp[0], ['EntId', 'isActive']),
+            });
+          }
+        },
+      );
+    });
   }
   findImageByCategoryId(category, page = 1, limit = 10) {
     const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
@@ -367,7 +454,12 @@ ImageService = __decorate(
   [
     common_1.Injectable(),
     __param(0, typeorm_1.InjectRepository(TemplateImage_entity_1.Image)),
-    __metadata('design:paramtypes', [typeorm_2.Repository, AppConfig_service_1.AppConfigService]),
+    __param(1, typeorm_1.InjectRepository(TemplateWizardPage_entity_1.WizardPage)),
+    __metadata('design:paramtypes', [
+      typeorm_2.Repository,
+      typeorm_2.Repository,
+      AppConfig_service_1.AppConfigService,
+    ]),
   ],
   ImageService,
 );

@@ -37,6 +37,7 @@ const TemplateEdit_module_1 = require('./modules/TemplateEdit/TemplateEdit.modul
 const TemplateFont_module_1 = require('./modules/TemplateFont/TemplateFont.module');
 const TemplateImage_module_1 = require('./modules/TemplateImage/TemplateImage.module');
 const TemplateImageLayer_module_1 = require('./modules/TemplateImageLayer/TemplateImageLayer.module');
+const TemplateWizardPage_module_1 = require('./modules/TemplateWizardPage/TemplateWizardPage.module');
 let AppModule = class AppModule {
   constructor(connection) {
     this.connection = connection;
@@ -53,6 +54,7 @@ AppModule = __decorate(
         TemplateEdit_module_1.EditImageModule,
         TemplateImageLayer_module_1.TemplateLayerModule,
         AppVersion_module_1.AppVersionModule,
+        TemplateWizardPage_module_1.WizardPageModule,
       ],
       controllers: [app_controller_1.AppController, ping_controller_1.PingController],
       providers: [app_service_1.AppService],
