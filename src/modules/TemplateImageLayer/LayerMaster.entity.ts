@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 import { CommonEntity } from '../../entities/common.entity';
 import { WizardPage } from '../TemplateWizardPage/TemplateWizardPage.entity';
