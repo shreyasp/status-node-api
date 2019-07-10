@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AsyncResultCallback, auto as asyncAuto } from 'async';
+import { AsyncResultCallback, auto as asyncAuto, mapValues as asyncMapValues } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
 import {
   ceil,
@@ -9,6 +9,7 @@ import {
   merge as loMerge,
   omit,
   set as loSet,
+  find as loFind,
   shuffle,
   startCase,
   toNumber,
@@ -19,6 +20,7 @@ import { assumeS3Role, putS3Object } from '../../utils/aws-s3.utils';
 import { AppConfigService } from '../AppConfig/AppConfig.service';
 import { Category } from '../TemplateCategory/TemplateCategory.entity';
 import { Image } from './TemplateImage.entity';
+import { WizardPage } from '../TemplateWizardPage/TemplateWizardPage.entity';
 
 @Injectable()
 class ImageService {
@@ -29,6 +31,7 @@ class ImageService {
 
   constructor(
     @InjectRepository(Image) private readonly ImageRepository: Repository<Image>,
+    @InjectRepository(WizardPage) private readonly WizardPageRepository: Repository<WizardPage>,
     config: AppConfigService,
   ) {
     this.accountId = config.accountId;
@@ -86,62 +89,137 @@ class ImageService {
   }
 
   findOneImage(id: number): Promise<any> {
-    const queryBuilder = this.ImageRepository.createQueryBuilder('Image');
-    return queryBuilder
-      .where('id = :id', { id })
-      .andWhere('Image.isActive = :isActive', { isActive: true })
-      .getOne()
-      .then(image => {
-        // NOTE: No Image exists within the database, so just return the back message
-        if (isEmpty(image)) {
-          return {
-            success: true,
-            message: `No Image with id:${id} found in the database`,
-            data: image,
-          };
-        }
+    return new Promise((resolve, reject) => {
+      asyncAuto(
+        {
+          getImageById: [
+            (getImageCB: AsyncResultCallback<{}, {}>) => {
+              const qBImage = this.ImageRepository.createQueryBuilder('Image');
+              qBImage
+                .where('id = :id', { id })
+                .andWhere('Image.isActive = :isActive', { isActive: true })
+                .getOne()
+                .then(image => {
+                  if (isEmpty(image)) getImageCB(null, false);
+                  else getImageCB(null, image);
+                })
+                .catch(err => getImageCB(err));
+            },
+          ],
+          getLayersForImage: [
+            'getImageById',
+            (result: any, getLayerCB: AsyncResultCallback<{}, {}>) => {
+              if (!result.getImageById) getLayerCB(null, {});
+              else {
+                const qbLayers = this.ImageRepository.createQueryBuilder('Image');
+                qbLayers
+                  .innerJoinAndSelect('Image.layers', 'layer')
+                  .where('layer.type = :type', { type: 'text' })
+                  .getOne()
+                  .then(layers => getLayerCB(null, layers))
+                  .catch(err => getLayerCB(err));
+              }
+            },
+          ],
+          getWizardPageByCategory: [
+            'getImageById',
+            (result: any, getWizardPageCB: AsyncResultCallback<{}, {}>) => {
+              if (!result.getImageById) getWizardPageCB(null, {});
+              else {
+                const qbWizardPage = this.ImageRepository.createQueryBuilder('Image');
+                qbWizardPage
+                  .leftJoinAndMapMany(
+                    'Image.pages',
+                    WizardPage,
+                    'wizardPage',
+                    'wizardPage.category = Image.category',
+                  )
+                  .getOne()
+                  .then(data => getWizardPageCB(null, data))
+                  .catch(err => getWizardPageCB(err));
+              }
+            },
+          ],
+          transformImageResp: [
+            'getLayersForImage',
+            'getWizardPageByCategory',
+            (result: any, transImgRespCB: AsyncResultCallback<{}, {}>) => {
+              if (!result.getImageById) transImgRespCB(null, {});
+              else {
+                const layers = result.getLayersForImage.layers;
+                const wizardPages = result.getWizardPageByCategory.pages;
+                let image = result.getImageById;
 
-        // NOTE: If Image exists, we need to check whether we have layers for the image
-        return queryBuilder
-          .innerJoinAndSelect('Image.layers', 'layer')
-          .where('id = :id', { id })
-          .andWhere('layer.type = :type', { type: 'text' })
-          .getOne()
-          .then(imageWLayers => {
-            // NOTE: We don't have layers information and so we will just respond back with the
-            // empty layer array in the response.
-            if (isEmpty(imageWLayers)) {
-              image.layers = [];
-            } else {
-              const modifiedLayers = loMap(imageWLayers.layers, layer =>
-                omit(loSet(layer, 'displayName', startCase(layer.name)), [
-                  'EntId',
-                  'layerId',
-                  'alignment',
-                  'layerParent',
-                  'isActive',
-                ]),
-              );
-              loSet(imageWLayers, 'layers', modifiedLayers);
+                asyncMapValues(
+                  wizardPages,
+                  (page: any, index, cb) => {
+                    const qbLayerMaster = this.WizardPageRepository.createQueryBuilder(
+                      'wizardPage',
+                    );
+                    qbLayerMaster
+                      .leftJoinAndSelect('wizardPage.layerMasters', 'layerMaster')
+                      .getOne()
+                      .then(data => data.layerMasters)
+                      .then(layerMasters => {
+                        const mappedLayers = loMap(layerMasters, layerMaster => {
+                          const l = loFind(
+                            layers,
+                            o => o.layerMasterId === layerMaster.layerMasterId,
+                          );
 
-              // NOTE: After post-processing Image with Layers merge with Image object before
-              // sending the response
-              loMerge(image, imageWLayers);
+                          return omit(loSet(l, 'displayName', startCase(l.name)), [
+                            'EntId',
+                            'layerId',
+                            'alignment',
+                            'layerParent',
+                            'isActive',
+                            'layerMasterId',
+                          ]);
+                        });
+                        page = omit(loSet(page, 'layers', mappedLayers), [
+                          'EntId',
+                          'pageId',
+                          'isActive',
+                        ]);
+                        image = loSet(image, `pages.[${index}]`, page);
+                        cb(null, image);
+                      })
+                      .catch(err => transImgRespCB(err));
+                  },
+                  (err, results) => {
+                    if (err) transImgRespCB(err);
+                    else transImgRespCB(null, results);
+                  },
+                );
+              }
+            },
+          ],
+        },
+        Infinity,
+        (err: Error, result: any) => {
+          if (err) {
+            reject({
+              success: false,
+              message: `Something went wrong while trying to get the Image with id: ${id}`,
+              err,
+            });
+          } else {
+            if (!result.getImageById) {
+              resolve({
+                success: true,
+                message: `No Image with id:${id} found in the database`,
+                data: {},
+              });
             }
-
-            return {
+            resolve({
               success: true,
-              message: `Image for id: ${id} successfully retrieved`,
-              data: omit(image, ['isActive', 'EntId']),
-            };
-          })
-          .catch(err => err);
-      })
-      .catch(err => ({
-        success: false,
-        message: `Something went wrong while trying to get the Image with id: ${id}`,
-        err,
-      }));
+              message: `Successfully retrieved Image with Id: ${id}`,
+              data: omit(result.transformImageResp[0], ['EntId', 'isActive']),
+            });
+          }
+        },
+      );
+    });
   }
 
   findImageByCategoryId(

@@ -11,6 +11,7 @@ import { EditImageModule } from './modules/TemplateEdit/TemplateEdit.module';
 import { TemplateFontModule } from './modules/TemplateFont/TemplateFont.module';
 import { TemplateImageModule } from './modules/TemplateImage/TemplateImage.module';
 import { TemplateLayerModule } from './modules/TemplateImageLayer/TemplateImageLayer.module';
+import { WizardPageModule } from './modules/TemplateWizardPage/TemplateWizardPage.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { TemplateLayerModule } from './modules/TemplateImageLayer/TemplateImageL
     EditImageModule,
     TemplateLayerModule,
     AppVersionModule,
+    WizardPageModule,
   ],
   controllers: [AppController, PingController],
   providers: [AppService],
