@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AsyncResultCallback, auto as asyncAuto, mapValues as asyncMapValues } from 'async';
+import { AsyncResultCallback, auto as asyncAuto } from 'async';
 import { Credentials, S3 } from 'aws-sdk';
 import {
   ceil,
   isEmpty,
   map as loMap,
-  merge as loMerge,
   omit,
   set as loSet,
   find as loFind,
   shuffle,
   startCase,
   toNumber,
+  filter as loFilter,
 } from 'lodash';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -150,47 +150,52 @@ class ImageService {
                 const wizardPages = result.getWizardPageByCategory.pages;
                 let image = result.getImageById;
 
-                asyncMapValues(
-                  wizardPages,
-                  (page: any, index, cb) => {
-                    const qbLayerMaster = this.WizardPageRepository.createQueryBuilder(
-                      'wizardPage',
-                    );
-                    qbLayerMaster
-                      .leftJoinAndSelect('wizardPage.layerMasters', 'layerMaster')
-                      .getOne()
-                      .then(data => data.layerMasters)
-                      .then(layerMasters => {
-                        const mappedLayers = loMap(layerMasters, layerMaster => {
-                          const l = loFind(
-                            layers,
-                            o => o.layerMasterId === layerMaster.layerMasterId,
-                          );
+                const qbLayerMaster = this.WizardPageRepository.createQueryBuilder('wizardPage');
+                qbLayerMaster
+                  .leftJoinAndSelect('wizardPage.layerMasters', 'layerMaster')
+                  .getMany()
+                  .then(wizardPages => {
+                    const pages = loMap(wizardPages, page => {
+                      const layerPageMap = loMap(page.layerMasters, layerMaster => {
+                        const mappedLayer = loFind(
+                          layers,
+                          o => o.layerMasterId === layerMaster.layerMasterId,
+                        );
 
-                          return omit(loSet(l, 'displayName', startCase(l.name)), [
+                        return (
+                          mappedLayer &&
+                          omit(loSet(mappedLayer, 'displayName', startCase(mappedLayer.name)), [
                             'EntId',
                             'layerId',
                             'alignment',
                             'layerParent',
                             'isActive',
                             'layerMasterId',
-                          ]);
-                        });
-                        page = omit(loSet(page, 'layers', mappedLayers), [
-                          'EntId',
-                          'pageId',
-                          'isActive',
-                        ]);
-                        image = loSet(image, `pages.[${index}]`, page);
-                        cb(null, image);
-                      })
-                      .catch(err => transImgRespCB(err));
-                  },
-                  (err, results) => {
-                    if (err) transImgRespCB(err);
-                    else transImgRespCB(null, results);
-                  },
-                );
+                          ])
+                        );
+                      });
+
+                      page = loSet(
+                        page,
+                        'layers',
+                        loFilter(layerPageMap, layer => !isEmpty(layer)),
+                      );
+
+                      return omit(page, [
+                        'EntId',
+                        'createdDate',
+                        'category',
+                        'isActive',
+                        'layerMasters',
+                        'updatedDate',
+                        'pageId',
+                      ]);
+                    });
+
+                    image = loSet(image, 'pages', pages);
+                    transImgRespCB(null, image);
+                  })
+                  .catch(err => transImgRespCB(err));
               }
             },
           ],
@@ -211,10 +216,11 @@ class ImageService {
                 data: {},
               });
             }
+
             resolve({
               success: true,
               message: `Successfully retrieved Image with Id: ${id}`,
-              data: omit(result.transformImageResp[0], ['EntId', 'isActive']),
+              data: omit(result.transformImageResp, ['EntId', 'isActive']),
             });
           }
         },
