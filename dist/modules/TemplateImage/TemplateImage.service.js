@@ -179,24 +179,25 @@ let ImageService = class ImageService {
                 const layers = result.getLayersForImage.layers;
                 const wizardPages = result.getWizardPageByCategory.pages;
                 let image = result.getImageById;
-                async_1.mapValues(
-                  wizardPages,
-                  (page, index, cb) => {
-                    const qbLayerMaster = this.WizardPageRepository.createQueryBuilder(
-                      'wizardPage',
-                    );
-                    qbLayerMaster
-                      .leftJoinAndSelect('wizardPage.layerMasters', 'layerMaster')
-                      .getOne()
-                      .then(data => data.layerMasters)
-                      .then(layerMasters => {
-                        const mappedLayers = lodash_1.map(layerMasters, layerMaster => {
-                          const l = lodash_1.find(
-                            layers,
-                            o => o.layerMasterId === layerMaster.layerMasterId,
-                          );
-                          return lodash_1.omit(
-                            lodash_1.set(l, 'displayName', lodash_1.startCase(l.name)),
+                const qbLayerMaster = this.WizardPageRepository.createQueryBuilder('wizardPage');
+                qbLayerMaster
+                  .leftJoinAndSelect('wizardPage.layerMasters', 'layerMaster')
+                  .getMany()
+                  .then(wizardPages => {
+                    const pages = lodash_1.map(wizardPages, page => {
+                      const layerPageMap = lodash_1.map(page.layerMasters, layerMaster => {
+                        const mappedLayer = lodash_1.find(
+                          layers,
+                          o => o.layerMasterId === layerMaster.layerMasterId,
+                        );
+                        return (
+                          mappedLayer &&
+                          lodash_1.omit(
+                            lodash_1.set(
+                              mappedLayer,
+                              'displayName',
+                              lodash_1.startCase(mappedLayer.name),
+                            ),
                             [
                               'EntId',
                               'layerId',
@@ -205,23 +206,28 @@ let ImageService = class ImageService {
                               'isActive',
                               'layerMasterId',
                             ],
-                          );
-                        });
-                        page = lodash_1.omit(lodash_1.set(page, 'layers', mappedLayers), [
-                          'EntId',
-                          'pageId',
-                          'isActive',
-                        ]);
-                        image = lodash_1.set(image, `pages.[${index}]`, page);
-                        cb(null, image);
-                      })
-                      .catch(err => transImgRespCB(err));
-                  },
-                  (err, results) => {
-                    if (err) transImgRespCB(err);
-                    else transImgRespCB(null, results);
-                  },
-                );
+                          )
+                        );
+                      });
+                      page = lodash_1.set(
+                        page,
+                        'layers',
+                        lodash_1.filter(layerPageMap, layer => !lodash_1.isEmpty(layer)),
+                      );
+                      return lodash_1.omit(page, [
+                        'EntId',
+                        'createdDate',
+                        'category',
+                        'isActive',
+                        'layerMasters',
+                        'updatedDate',
+                        'pageId',
+                      ]);
+                    });
+                    image = lodash_1.set(image, 'pages', pages);
+                    transImgRespCB(null, image);
+                  })
+                  .catch(err => transImgRespCB(err));
               }
             },
           ],
@@ -245,7 +251,7 @@ let ImageService = class ImageService {
             resolve({
               success: true,
               message: `Successfully retrieved Image with Id: ${id}`,
-              data: lodash_1.omit(result.transformImageResp[0], ['EntId', 'isActive']),
+              data: lodash_1.omit(result.transformImageResp, ['EntId', 'isActive']),
             });
           }
         },
