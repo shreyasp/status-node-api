@@ -145,6 +145,7 @@ let ImageService = class ImageService {
                 qbLayers
                   .innerJoinAndSelect('Image.layers', 'layer')
                   .where('layer.type = :type', { type: 'text' })
+                  .andWhere('layer.image = :id', { id })
                   .getOne()
                   .then(layers => getLayerCB(null, layers))
                   .catch(err => getLayerCB(err));
