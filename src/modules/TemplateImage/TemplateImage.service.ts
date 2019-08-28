@@ -106,6 +106,20 @@ class ImageService {
                 .catch(err => getImageCB(err));
             },
           ],
+          getRawImageData: [
+            (getRawImageCB: AsyncResultCallback<{}, {}>) => {
+              const qBImage = this.ImageRepository.createQueryBuilder('Image');
+              qBImage
+                .where('id = :id', { id })
+                .andWhere('Image.isActive = :isActive', { isActive: true })
+                .getRawOne()
+                .then(rawImageData => {
+                  if (isEmpty(rawImageData)) getRawImageCB(null, false);
+                  else getRawImageCB(null, rawImageData);
+                })
+                .catch(err => getRawImageCB(err));
+            },
+          ],
           getLayersForImage: [
             'getImageById',
             (result: any, getLayerCB: AsyncResultCallback<{}, {}>) => {
@@ -124,9 +138,11 @@ class ImageService {
           ],
           getWizardPageByCategory: [
             'getImageById',
+            'getRawImageData',
             (result: any, getWizardPageCB: AsyncResultCallback<{}, {}>) => {
               if (!result.getImageById) getWizardPageCB(null, {});
               else {
+                const categoryId = result.getRawImageData.Image_categoryId;
                 const qbWizardPage = this.ImageRepository.createQueryBuilder('Image');
                 qbWizardPage
                   .leftJoinAndMapMany(
@@ -135,8 +151,12 @@ class ImageService {
                     'wizardPage',
                     'wizardPage.category = Image.category',
                   )
+                  .where('wizardPage.category = :categoryId', { categoryId })
                   .getOne()
-                  .then(data => getWizardPageCB(null, data))
+                  .then(data => {
+                    if (isEmpty(data)) getWizardPageCB(null, false);
+                    else getWizardPageCB(null, data);
+                  })
                   .catch(err => getWizardPageCB(err));
               }
             },
