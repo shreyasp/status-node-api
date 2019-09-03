@@ -152,6 +152,7 @@ class ImageService {
                     'wizardPage.category = Image.category',
                   )
                   .where('wizardPage.category = :categoryId', { categoryId })
+                  .andWhere('wizardPage.isActive = :isActive', { isActive: true })
                   .getOne()
                   .then(data => {
                     if (isEmpty(data)) getWizardPageCB(null, false);
