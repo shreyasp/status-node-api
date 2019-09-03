@@ -136,6 +136,20 @@ let ImageService = class ImageService {
                 .catch(err => getImageCB(err));
             },
           ],
+          getRawImageData: [
+            getRawImageCB => {
+              const qBImage = this.ImageRepository.createQueryBuilder('Image');
+              qBImage
+                .where('id = :id', { id })
+                .andWhere('Image.isActive = :isActive', { isActive: true })
+                .getRawOne()
+                .then(rawImageData => {
+                  if (lodash_1.isEmpty(rawImageData)) getRawImageCB(null, false);
+                  else getRawImageCB(null, rawImageData);
+                })
+                .catch(err => getRawImageCB(err));
+            },
+          ],
           getLayersForImage: [
             'getImageById',
             (result, getLayerCB) => {
@@ -154,9 +168,11 @@ let ImageService = class ImageService {
           ],
           getWizardPageByCategory: [
             'getImageById',
+            'getRawImageData',
             (result, getWizardPageCB) => {
               if (!result.getImageById) getWizardPageCB(null, {});
               else {
+                const categoryId = result.getRawImageData.Image_categoryId;
                 const qbWizardPage = this.ImageRepository.createQueryBuilder('Image');
                 qbWizardPage
                   .leftJoinAndMapMany(
@@ -165,8 +181,13 @@ let ImageService = class ImageService {
                     'wizardPage',
                     'wizardPage.category = Image.category',
                   )
+                  .where('wizardPage.category = :categoryId', { categoryId })
+                  .andWhere('wizardPage.isActive = :isActive', { isActive: true })
                   .getOne()
-                  .then(data => getWizardPageCB(null, data))
+                  .then(data => {
+                    if (lodash_1.isEmpty(data)) getWizardPageCB(null, false);
+                    else getWizardPageCB(null, data);
+                  })
                   .catch(err => getWizardPageCB(err));
               }
             },
