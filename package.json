@@ -1,6 +1,6 @@
 {
   "name": "status-rest-api",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "REST API for Status App consumers",
   "author": "Shreyas Patil",
   "license": "MIT",

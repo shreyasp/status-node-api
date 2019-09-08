@@ -87,10 +87,13 @@ let EditImageService = class EditImageService {
     this.awsRegion = config.awsRegion;
     this.bucketName = config.bucketName;
   }
-  registerTemplateFonts(uniqFonts) {
+  registerTemplateFonts(uniqFonts, fontExtMap) {
     const basePath = path_1.join(__dirname, 'fonts');
     async_1.each(uniqFonts, fontName => {
-      canvas_1.registerFont(path_1.join(basePath, `${fontName}.ttf`), { family: `${fontName}` });
+      const fontObj = lodash_1.find(fontExtMap, f => f.path === fontName);
+      canvas_1.registerFont(path_1.join(basePath, `${fontObj.path}` + `${fontObj.extension}`), {
+        family: `${fontName}`,
+      });
     });
   }
   placeTextLayers(id, layers, xPlacement, context) {
@@ -232,7 +235,10 @@ let EditImageService = class EditImageService {
                               fs_1.writeFile(fontPath, data, err => {
                                 if (err) downloadFontsCB(err);
                                 filesToCleanUp.push(fontPath);
-                                cb(null, fontPath);
+                                cb(null, {
+                                  path: path_1.parse(url_1.parse(fontUrl.fontPath).path).name,
+                                  extension: path_1.parse(url_1.parse(fontUrl.fontPath).path).ext,
+                                });
                               });
                             })
                             .catch(err => downloadFontsCB(err));
@@ -258,7 +264,8 @@ let EditImageService = class EditImageService {
               (results, registerFontsCb) => {
                 this.getImageUniqFonts(id)
                   .then(data => {
-                    this.registerTemplateFonts(data.fonts);
+                    const fontExtMap = results.downloadFonts;
+                    this.registerTemplateFonts(data.fonts, fontExtMap);
                     registerFontsCb(null, { success: true });
                   })
                   .catch(err => {
