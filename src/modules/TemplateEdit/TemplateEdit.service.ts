@@ -11,7 +11,7 @@ import { S3 } from 'aws-sdk';
 import axios from 'axios';
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import { createWriteStream, unlink, writeFile } from 'fs';
-import { get, map, merge, uniq } from 'lodash';
+import { find, get, map, merge, uniq } from 'lodash';
 import * as moment from 'moment';
 import { join, parse } from 'path';
 import { DeepPartial, Repository } from 'typeorm';
@@ -87,11 +87,15 @@ class EditImageService {
     this.bucketName = config.bucketName;
   }
 
-  registerTemplateFonts(uniqFonts: string[]) {
+  registerTemplateFonts(uniqFonts: string[], fontExtMap: any) {
     // TODO: Establish a base path where all the uploaded fonts will be stored
     const basePath: string = join(__dirname, 'fonts');
     asyncEach(uniqFonts, (fontName: string) => {
-      registerFont(join(basePath, `${fontName}.ttf`), { family: `${fontName}` });
+      // Find the relevant object for getting font name and its extension
+      const fontObj = find(fontExtMap, f => f.path === fontName);
+      registerFont(join(basePath, `${fontObj.path}` + `${fontObj.extension}`), {
+        family: `${fontName}`,
+      });
     });
   }
 
@@ -242,7 +246,10 @@ class EditImageService {
                             writeFile(fontPath, data, err => {
                               if (err) downloadFontsCB(err);
                               filesToCleanUp.push(fontPath);
-                              cb(null, fontPath);
+                              cb(null, {
+                                path: parse(urlParse(fontUrl.fontPath).path).name,
+                                extension: parse(urlParse(fontUrl.fontPath).path).ext,
+                              });
                             });
                           })
                           .catch(err => downloadFontsCB(err));
@@ -268,7 +275,8 @@ class EditImageService {
             (results: any, registerFontsCb: AsyncResultCallback<{}, {}>) => {
               this.getImageUniqFonts(id)
                 .then(data => {
-                  this.registerTemplateFonts(data.fonts);
+                  const fontExtMap = results.downloadFonts;
+                  this.registerTemplateFonts(data.fonts, fontExtMap);
                   registerFontsCb(null, { success: true });
                 })
                 .catch(err => {
